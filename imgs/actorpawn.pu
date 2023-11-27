@@ -1,0 +1,5 @@
+@startuml
+Actor <|-- Pawn
+Pawn <|-- Character
+hide members
+@end

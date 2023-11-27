@@ -1,0 +1,464 @@
+# -*- encoding:utf-8; -*-
+#+title: Trabajar con blueprints visuales y C++
+#+author: Carlos León
+#+EMAIL: cleon@ucm.es
+#+department: Department of Software Engineering and Artificial Intelligence
+#+institution: Computer Science Faculty, Universidad Complutense de Madrid
+#+address: Calle Profesor José García Santesmases, 9, 28040 Madrid, Spain
+#+LANGUAGE: es
+#+OPTIONS: toc:nil reveal_history:t timestamp:nil date:nil author:t email:t num:nil reveal_single_file:nil inline:nil
+#+REVEAL_INIT_OPTIONS: slideNumber:true
+#+reveal_mousewheel:t
+#+REVEAL_TRANS: none
+#+REVEAL_EXTRA_CSS: base.css
+#+addbibresource: ~/articulos/bibliografia.bib
+#+BIBLIOGRAPHY: ~/articulos/bibliografia.bib
+#+language: es
+
+# #+REVEAL_PLUGINS: (search highlight zoom)
+
+* ¿BP o C++?
+
+** ¿Por qué usar Blueprint visuales?
+
+
+#+REVEAL: split
+
+En C++ es más sencillo (y en ocasiones más eficiente) hacer ciertos comportamientos (como cálculos matemáticos complejos)
+
+#+REVEAL: split
+
+Sin embargo, hay algunos comportamientos que se programan muy fácilmente de modo gráfico
+
+
+** Componentes como bloques Blueprint visuales
+
+
+#+REVEAL: split
+
+Vamos a crear un actor+componente que sea un trigger y se active justo delante de la celda, sólo si tenemos los puntos suficientes
+
+El =Actor= puede ser en Blueprints o en C++
+
+#+REVEAL: split
+
+Cuando solape con ese actor, lanzará un evento
+
+#+REVEAL: split
+
+Ahora, /en el componente/, añadimos (por encima de =UCLASS(ClassGroup=...))=) el siguiente código:
+
+#+begin_src cpp
+DECLARE_DYNAMIC_MULTICAST_DELEGATE()
+#+end_src
+
+#+REVEAL: split
+
+Un [[https://docs.unrealengine.com/latest/en-US/delegates-and-lamba-functions-in-unreal-engine/][/delegate/]] es una estructura que encapsula una llamada a función
+
+Se usan para conectar /blueprints/ con C++
+
+#+REVEAL: split
+
+=DECLARE_DYNAMIC_MULTICAST_DELEGATE= es necesario si queremos que haya una propiedad del componente que podamos asignar en un Blueprint
+
+- =DYNAMIC=: puede ser serializado
+- =MULTICAST=: de uno a muchos
+- =DELEGATE=: algo externo va a manejar la operación
+
+#+REVEAL: split
+
+Ahora creamos el código:
+
+#+begin_src cpp
+// hay muchas macros en las que ';' es opcional
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAntesTerminar); 
+#+end_src
+
+(Recordemos que =F= al principio de la clase se usa por convenio en Unreal)
+
+Esto crea una clase propia para la señal en el editor de Blueprints
+
+#+REVEAL: split
+
+Después, en los atributos privados, creemos un =UPROPERTY= con el param de esa clase que hemos referenciado en =DECLARE_DYNAMIC_MULTICAST_DELEGATE=
+
+#+REVEAL: split
+
+Esta propiedad tiene que ser =BlueprintAssignable=: [[https://docs.unrealengine.com/latest/en-US/exposing-gameplay-elements-to-blueprints-visual-scripting-in-unreal-engine/][=UPROPERTY(BlueprintAssignable)=]] para que se vea en el editor:
+#+begin_src cpp
+UPROPERTY(BlueprintAssignable)
+FAntesTerminar AntesTerminar;
+#+end_src
+
+#+REVEAL: split
+
+Bien, ahora hemos creado un /evento/
+
+#+REVEAL: split
+
+Para ello, cuando detectemos solape con la gema, vamos a hacer =Broadcast= sobre el evento:
+
+#+begin_src cpp
+AntesTerminar.Broadcast();
+#+end_src
+
+#+REVEAL: split
+
+Si hemos hecho el actor en C++ tenemos que añadir el componente al actor de nuestro trigger con =CreateDefaultSubobject=
+
+Si está en Blueprint, directamente en el editor
+
+Añadimos también, en el =Actor=, un =Box= de colisión para establecer el volumen
+
+
+#+REVEAL: split
+
+Si el =Actor= está en C++, el componente tendrá que ser =BlueprintReadWrite= porque queremos acceder a él desde el editor de /blueprints/:
+
+
+#+begin_src cpp
+public:
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
+  UComponenteAntesTerminar * _antesTerminar;
+#+end_src
+
+#+BEGIN_NOTES
+Tenía puesto que tenía que ser "public" en la clase, pero no lo tengo muy claro
+#+END_NOTES
+
+
+#+REVEAL: split
+
+Ahora vamos al Blueprint del actor que contiene el componente y en los eventos añadimos el nuevo evento que ha aparecido:
+
+#+caption: Aparecerá un botón nuevo en los eventos, pinchando en el componente
+#+attr_html: :height 450
+[[file:imgs/evento_aparece_en_bp.png]]
+
+
+#+REVEAL: split
+
+#+caption: Y este evento lo podemos usar en el /blueprint/ como queramos
+#+attr_html: :height 500
+[[file:imgs/usar_delegate_bp.png]]
+
+* Funciones desde C++
+
+
+#+REVEAL: split
+
+Hasta ahora nos hemos centrado en usar C++ como una alternativa a /blueprints/, pero realmente se complementan muy bien
+
+#+REVEAL: split
+
+Vamos a ver cómo llamar a funciones C++ desde /blueprints/, y a funciones /blueprint/ desde C++
+
+* Llamar a funciones desde el editor
+
+#+REVEAL: split
+
+En el =.h= de un =Actor= nuevo, añadimos el prototipo de una función sencilla:
+
+#+begin_src cpp
+UFUNCTION(BlueprintCallable)
+void SaySomething(const FText & text);
+#+end_src
+
+#+REVEAL: split
+
+Que implementamos así:
+
+#+begin_src cpp
+void AActorFuncionLlamable::SaySomething(const FText &text)
+{
+    FString str = text.ToString();
+    UE_LOG(LogTemp, Warning, TEXT("%s"), *str)
+}
+#+end_src
+
+#+BEGIN_NOTES
+Puedes recordarles que =FText= es lo suyo para cadenas localizadas
+#+END_NOTES
+
+#+REVEAL: split
+
+Las =UFUNCTION= usan los parámetros como entrada, a no ser que sean como referencia no constante, caso en el cual los usan como salida:
+
+#+begin_src cpp
+UFUNCTION(BlueprintCallable)
+int32 fun(int32 & output);
+#+end_src
+
+#+REVEAL: split
+
+Para hacer que esos parámetros no sean de salida, usamos la macro =UPARAM=, con el argumento =ref=
+
+#+begin_src cpp
+UFUNCTION(BlueprintCallable)
+int32 fun(
+    UPARAM(ref) int32 & output
+    );
+#+end_src
+
+#+REVEAL: split
+
+También podemos cambiar la etiqueta de la variable:
+
+#+begin_src cpp
+UFUNCTION(BlueprintCallable)
+int32 fun(
+    UPARAM(DisplayName="Total weight") int32 & output
+    );
+#+end_src
+
+#+REVEAL: split
+
+Para alimentar la función, podemos construir el siguiente esquema en el /blueprint/ del nivel:
+
+#+caption: Blueprint para establecer variable
+#+attr_html: :height 450
+[[file:imgs/bp_llama_cpp.png]]
+
+#+REVEAL: split
+
+Podemos establecer diferentes tipos de =UFUNCTION=, de forma que si queremos una función constante/pura (sin "pestañas" de orden de ejecución en los /blueprints/, porque no tiene /side-effects/):
+
+#+begin_src cpp
+UFUNCTION(BlueprintCallable)
+float CalculoSinEfectos() const;
+#+end_src
+
+* Llamar a funciones /blueprint/ desde C++
+
+#+REVEAL: split
+
+[[https://docs.unrealengine.com/latest/en-US/API/Runtime/CoreUObject/UObject/UObject/CallFunctionByNameWithArguments/][=UObject=]] tiene el método =CallFunctionByNameWithArguments=
+
+Con este método podemos acceder a una función en /blueprints/
+
+#+REVEAL: split
+
+Vamos a crear un componente /blueprint/ en el editor (es decir, *que no sea C++*)
+
+En él, creamos una función que imprima un texto por pantalla
+
+#+REVEAL: split
+
+#+caption: Función con un parámetro =Text= que imprime la entrada
+#+attr_html: :height 450
+[[file:imgs/funcion_bp_llamable.png]]
+
+#+REVEAL: split
+
+Ahora creamos un =Actor= en C++, y en algún sitio (=Tick=, =BeginPlay=):
+
+#+begin_src cpp
+#include "Misc/OutputDeviceNull.h"
+
+// UImprimidorPadreCPP no existe aún
+auto f = FindComponentByClass<UImprimidorPadreCPP>();
+if (nullptr != f)
+{
+    // puede ser este null ahora
+    FOutputDeviceNull n;
+
+    f->CallFunctionByNameWithArguments(
+        TEXT("Saludar \"hola a todos\""),
+        n,  // dispositivo de salida
+        nullptr, // ejecutor (null vale)
+        true); // forzar llamada (T vale)
+}
+#+end_src
+
+#+REVEAL: split
+
+En efecto, /no compila/
+
+#+REVEAL: split
+
+Lo que ocurre es que necesitamos que la clase a la que estamos haciendo referencia /exista en C++/
+
+#+REVEAL: split
+
+Vamos a crear una nueva clase en C++ que sea /padre/ de la clase que queremos, para así poder importarla (=#include=)
+
+#+REVEAL: split
+
+Creamos una clase =Actor= de C++
+
+Nos aseguramos de que su =UCLASS= sea =Blueprintable=
+
+#+REVEAL: split
+
+#+begin_src cpp
+UCLASS( Blueprintable, ...)
+#+end_src
+
+#+REVEAL: split
+
+Asegurémonos de que todo compila correctamente
+
+#+REVEAL: split
+
+Ahora volvemos a nuestra clase /blueprint/ original, y cambiamos el padre:
+
+#+caption: Cambiar el padre de una clase
+#+attr_html: :height 350
+[[file:imgs/reparent_class.png]]
+
+
+#+REVEAL: split
+
+Ahora ya podemos /incluir/ la clase *padre* en nuestro =ActorQueLlamaBP=
+
+#+begin_src cpp
+#include "ImprimidorPadreCPP.h"
+#+end_src
+
+#+BEGIN_NOTES
+recálcales que es la *clase padre* sólo, pero que eso funciona porque la llamada no necesita tipos
+#+END_NOTES
+
+# #+REVEAL: split
+
+# Incluimos el componente (es decir, el blueprint) en nuestro actor
+
+# Podemos instanciar el actor desde C++, o crear una clase /blueprint/ hija del actor de C++ para ponerle el componente con el editor
+
+#+REVEAL: split
+
+Y probamos:
+
+#+begin_src cpp
+#include "Misc/OutputDeviceNull.h"
+
+// Si el BP se llama 'UImprimidorPadreCPP', y la función "Saludar"
+auto f = FindComponentByClass<UImprimidorPadreCPP>();
+if (nullptr != f) // comprobad siempre
+  {
+    FOutputDeviceNull n;
+    FString param = "\"hola a todos!\" 6";
+    FString cmd =
+      FString::Printf(
+		      TEXT("Saludar %s"),
+		      ,*param);
+
+    // Debe imprimir "hola a todos!" y "7" en pantalla
+    f->CallFunctionByNameWithArguments(
+       ,*cmd, n, nullptr, true);
+  }
+#+end_src
+
+#+REVEAL: split
+
+# #+caption: Ejemplo de salida llamado a una función /blueprint/ desde C++
+# [[file:2018-12-10-13-39-21.png]]
+
+#+caption: Ejemplo de salida llamado a una función /blueprint/ desde C++
+#+attr_html: :height 400
+[[file:imgs/salida_bp_desde_cpp.png]]
+
+
+* Más maneras de interactuar BP/C++
+
+** =BlueprintImplementableEvent=
+
+#+begin_src cpp
+UFUNCTION(BlueprintImplementableEvent)
+void EventoBP();
+#+end_src
+
+** =BlueprintNativeEvent=
+
+#+begin_src cpp
+UFUNCTION(BlueprintNativeEvent)
+void EventoBP();
+
+// ...
+
+void AMiActor::EventoBP_Implementation()
+{
+  // ...
+}
+#+end_src
+
+* Cosas que los /blueprints/ no pueden hacer
+
+
+#+REVEAL: split
+
+Se puede llegar muy lejos con /blueprints/
+
+Pero hay algunas cosas que necesitan C++
+
+
+** Importar librerías externas
+
+Para código existente (en C++ u otros lenguajes), hay que usar C++
+
+** Colaborar a nivel de módulo
+
+Los /blueprints/ son archivos binarios, es difícil ponerlos en control de versiones y trabajar por partes en paralelo
+
+** Algunas cosas se expresan mejor en C++
+
+Los /blueprints/ están pensado para lógica de juego, no para algoritmos complejos y genéricos
+
+Muchas veces, el código C++ será más fácil de mantener que un script visual de /blueprints/ muy complejo
+
+* Eficiencia /blueprints/ y eficiencia C++
+
+#+begin_quote
+Los /blueprints/ son más lentos que C++
+#+end_quote
+
+# ** Eficiencia del juego
+
+
+# - Pero UE precompila los /blueprints/, consiguiendo muy buena
+#   optimización (esto está desactivado por defecto)
+
+# ** TODO QUITAR!
+
+# - [[https://docs.unrealengine.com/5.0/en-US/nativizing-blueprints-in-unreal-engine/][nativizing]]
+
+# #+REVEAL: split
+
+# #+caption: Precompilación (/nativization/) de /blueprints/
+# [[file:2018-12-10-14-31-18.png]]
+
+
+** Eficiencia del desarrollo
+
+La eficiencia no está sólo en la ejecución, sino también en la velocidad
+a la que se crea el juego
+
+#+REVEAL: split
+
+Con /blueprints/, en general, se llega antes a un prototipo jugable
+
+#+REVEAL: split
+
+No hay que despreciar el tiempo de ciclo de prueba-compilación en C++
+
+Es alto, por el tipo de construcción de UE, pero ha mejorado mucho en cada versión
+
+
+** Cómo usar C++ rápido
+
+- Experimentar/prototipar en /blueprints/
+- No cambiéis los =.h= a menudo
+- Añadid mucho código antes de compilar
+- Usad algo mejor que "Intellisense" (Visual Assist, por ejemplo)
+
+# [[https://forums.unrealengine.com/development-discussion/c-gameplay-programming/1397768-c-poor-dev-performance-vs-blueprint-slow-and-intellisense-buggy][trucos]]
+
+* Ampliaciones
+
+
+#+REVEAL: split
+
+- Implementar todo el ejemplo que se ha puesto
+- Que se cree un texto en pantalla (no con un =print=, sino con un /billboard/) indicando qué hay que hacer
+- Hacer que la celda se suba con un /timeline/ como respuesta al evento de antes de terminar

@@ -1,0 +1,968 @@
+# -*- encoding:utf-8; -*-
+
+#+title: Arquitectura de juegos en Unreal Engine con C++
+#+AUTHOR: Carlos León
+#+EMAIL: cleon@ucm.es
+#+department: Department of Software Engineering and Artificial Intelligence
+#+institution: Computer Science Faculty, Universidad Complutense de Madrid
+#+address: Calle Profesor José García Santesmases, 9, 28040 Madrid, Spain
+#+LANGUAGE: es
+#+OPTIONS: toc:nil reveal_history:t timestamp:nil date:nil author:t email:t num:nil reveal_single_file:nil inline:nil
+#+REVEAL_INIT_OPTIONS: slideNumber:true
+#+reveal_mousewheel:t
+#+REVEAL_TRANS: none
+#+REVEAL_EXTRA_CSS: base.css
+#+REVEAL_PLUGINS: (search highlight zoom)
+#+addbibresource: ~/articulos/bibliografia.bib
+#+BIBLIOGRAPHY: ~/articulos/bibliografia.bib
+#+language: es
+
+# https://docs.unrealengine.com/5.0/en-US/unreal-engine-5-migration-guide/
+
+
+
+
+* Profesor
+
+- Carlos León <[[mailto:cleon@ucm.es][cleon@ucm.es]]>
+- Profesor FdI
+- Docencia MVJ: Refuerzo programación, arquitectura UE con C++, prácticas diseño de niveles, tutor de
+  diseño
+
+# #+REVEAL: split
+
+# - Ismael Sagredo <[[mailto:isagredo@ucm.es][isagredo@ucm.es]]>
+# - Profesor FdI
+# - Docencia MVJ: Unreal, C++, tutor de programación
+
+* ¿Qué vamos a hacer en este módulo?
+
+- Vamos a ver Unreal Engine, *desde C++*
+- Veremos que seguimos usando el editor, Blueprints...
+- Hay mucho contenido
+- Vamos a ver las partes fundamentales para que podáis seguir a partir de ahí
+- Serán sesiones con algo de teoría, pero sobre todo /prácticas/
+
+#+BEGIN_NOTES
+- Explicar que es material confeccionado a partir de muchos tutoriales y trozos
+- que intenta ser explicativo y condensar lo básico de arquitectura C++
+#+END_NOTES
+
+#+REVEAL: split
+
+Será, principalmente, un recorrido "en anchura" por las opciones y arquitectura que nos da UE en C++
+
+* Puesta en marcha
+
+
+#+REVEAL: split
+
+Es necesario tener instalado Visual Studio
+
+La versión [[https://www.visualstudio.com/es/vs/community/][Community]] funciona perfectamente, aunque probablemente se pueda hacer funcionar con otras, sin mucho problema
+
+#+REVEAL: split
+
+Al instalarla, aseguraos de que se instala:
+
+- Programming Languages $\rightarrow$ C++
+- En el "Visual Studio Installer" (=Herramientas= $\rightarrow$ =Obtener herramientas y características...=):
+  - [[https://learn.microsoft.com/en-us/visualstudio/gamedev/unreal/get-started/vs-tools-unreal-install][Desarrollo de juegos con C++]]
+    - Windows 10 SDK
+    - Compatibilidad con IDE para el motor de Unreal
+    - Visual Studio Integration Tool (bazar de la Epic Store)     
+      
+      
+#+REVEAL: split
+
+En macOS, [[https://developer.apple.com/xcode/][Xcode]] es una alternativa válida a Visual Studio
+
+También se puede usar CLion y VSCode, y cualquier otro editor más simple que pueda compilar y depurar
+
+#+BEGIN_NOTES
+- Explica que UE usa compilación "normal"
+#+END_NOTES
+
+#+REVEAL: split
+
+UE tiene su propio sistema de construcción, independiente del IDE que usemos
+
+** Visual Studio
+
+Visual Studio es *complejo*, aunque muchos ya estaréis familiarizados con él
+
+#+REVEAL: split
+
+En estas clases usaremos solo la funcionalidad básica y la relación con Unreal Engine/Unreal Editor
+
+- lanzamos el /Launcher/ (de forma habitual)
+- ejecutamos el editor de Unreal
+- y elegimos proyecto *C++* (*no Blueprint*)
+
+#+REVEAL: split
+
+Creamos un proyecto tipo /Basic code/
+
+#+REVEAL: split
+
+#+caption: Crear nuevo proyecto básico *C++*
+#+attr_html: :height 500
+[[file:imgs/nuevo_proyecto.png]]
+
+
+** Unreal Editor crea un proyecto de Visual Studio
+
+Ahora estaremos trabajando en paralelo con Visual Studio y Unreal Editor
+
+Es decir, ambas ventanas estarán abiertas, e iremos cambiando de una a otra
+
+#+REVEAL: split
+
+Suele ser útil usar cada uno de los entornos para lo que hacen mejor: navegar, modificar y organizar con Unreal Editor, y programar con VS
+
+Pero hay mucha funcionalidad común entre UE, VS (e incluso el explorador de Windows o el cliente de versiones de código)
+
+* Archivos y recursos básicos del proyecto
+
+Desde el /punto de vista de un proyecto UE en C++/, los recursos imprescindible en un repositorio son:
+
+- =juego.uproject=
+- =Config/=
+- =Content/=
+- =Source/=
+
+(Puede haber muchos más archivos, pero estos son los que contienen el contenido base)  
+
+#+REVEAL: split
+
+#+caption: Unreal Engine puede re-crear los archivos de proyecto de Visual Studio a partir de un proyecto bien configurado
+#+attr_html: :width 400
+[[file:imgs/regenerar_proyecto_vs.png]]
+
+* Arquitectura de Unreal Engine
+
+** Unreal Engine es muy complejo
+
+La arquitectura interna de Unreal, como ya habéis visto, es *muy grande y compleja*
+
+#+REVEAL: split
+
+Por supuesto, no es necesario conocerla entera para poder hacer un juego en C++ en Unreal
+
+La arquitectura de Unreal usa mucho la herencia, pero está fundamentalmente orientada a componentes
+
+
+** Un vistazo (repaso)
+
+=Tools= $\rightarrow$ =Class Viewer=
+
+#+caption: Actors
+[[file:imgs/actorpawn.svg]]
+
+#+REVEAL: split
+
+Igual que en Blueprints, =Actor= es la base de la jerarquía de los elementos en la escena de Unreal Engine (hay otras jerarquías)
+
+
+** Nomenclatura
+
+Las clases cuyo nombre empieza por =A= se refieren a objetos que pueden ser creados en el mundo. Son los actores (=Actor=)
+
+#+REVEAL: split
+
+Las clases que no pueden ser creadas directamente en el mundo y tienen que pertenecer a un actor empiezan por =U=
+
+#+REVEAL: split
+
+Si generamos las clases desde el editor, éste hará una buena parte del trabajo por nosotros y nombrará a los ficheros *sin los prefijos*
+
+#+REVEAL: split
+
+Para declarar una clase C++ para Unreal lo hacemos de forma normal, pero añadimos un par de /macros/ que informan a Unreal de la clase: =UCLASS= y ~GENERATED_BODY()~
+
+** =UCLASS=
+
+=UCLASS= básicamente le da al objeto C++ una referencia al objeto Unreal
+
+Este objeto tiene datos importantes que Unreal usa para muchas cosas
+
+#+REVEAL: split
+
+Entre otras:
+
+- recolección de basura
+- serialización
+- inicialización de propiedades
+- integración con el editor
+- replicación en red
+- y [[https://docs.unrealengine.com/latest/en-US/objects-in-unreal-engine/][algunas otras]]
+
+** =UFUNCTION=
+
+Las funciones en las clases de Unreal pueden ser métodos normales, o pueden ser =UFUNCTION=
+
+#+REVEAL: split
+
+Una =UFUNCTION= puede ser usada como una función normal, pero además puede ser usada por el editor, por ejemplo en los Blueprints
+
+También pueden ser usadas para ser ejecutadas automáticamente por el motor, o desde la consola mientras se juega
+
+
+** =USTRUCT=
+
+Un =USTRUCT= es un =struct= que se "da de alta" en Unreal Engine, [[https://docs.unrealengine.com/latest/en-US/structs-in-unreal-engine/][haciéndolo visible]] para serialización, Blueprints, etc
+
+** =UPROPERTY=
+
+Si creamos un componente en el constructor y queremos que Unreal se encargue de su gestión, debemos declararlo como atributo y asignarle la macro =UPROPERTY=
+
+#+REVEAL: split
+
+También tenemos =UPARAM=, =UINTERFACE=... 
+
+* Programar en Unreal con C++
+
+Ahora, empecemos a programar con Unreal en C++
+
+#+REVEAL: split
+
+#+caption: Desde cualquier escena, creemos una malla estática (=Static Mesh=), por ejemplo un cubo
+#+attr_html: :height 500
+[[file:imgs/crear_cubo.png]]
+
+#+REVEAL: split
+
+=Details= $\rightarrow$ =Add Component=
+
+#+caption: Añadir un *componente C++* nuevo, de tipo =Actor=
+#+attr_html: :height 500
+[[file:imgs/crear_actor_cubo.png]]
+
+#+REVEAL: split
+
+Una vez que creamos eso, Unreal crea código y, entre el código de plantilla que crea, inserta la clase que hemos creado
+
+#+REVEAL: split
+
+La podemos ver dentro de =Source=. Vayamos al =.h=
+
+Podemos ver también que hay unas cuantas directivas de procesador "decorando" nuestra clase
+
+Veremos también que, sea el nombre que sea, ha añadido una =U= al principio del nombre. Es el convenio de nombres de Unreal
+
+#+REVEAL: split
+
+Si vamos al =.cpp=, es mucho más sencillo, y solo nos da dos métodos (casi) vacíos para rellenar
+
+#+REVEAL: split
+
+Si volvemos al =.h=, veremos que en la parte de arriba nos deja un comentario con la cabecera del código
+
+En =Settings= $\rightarrow$ =Project settings= $\rightarrow$ =Description= podemos rellenar los campos para que nos lo genere automáticamente
+
+(No lo hará para archivos ya creados)
+
+#+REVEAL: split
+
+En el =.h= podemos ver que nuestro componente nuevo hereda de =UActorComponent=
+
+Vemos que hay algunas macros (no prestemos atención a ellas ahora) y la declaración de los métodos
+
+#+REVEAL: split
+
+Ya en el =.cpp= podemos ver en el constructor:
+
+#+begin_src cpp
+// El código se ejecutará en cada "frame"
+PrimaryComponentTick.bCanEverTick = true;
+#+end_src
+
+En =BeginPlay=, se llama al correspondiente método del padre en la cadena de herencia (con =Super::BeginPlay()=)
+
+#+REVEAL: split
+
+Nosotros vamos a escribir código en la parte que está comentada con puntos suspensivos:
+
+#+begin_src cpp
+// ...
+#+end_src
+
+#+REVEAL: split
+
+Lo primero que vamos a hacer es usar la clase que hemos creado, el componente, para que imprima algo por pantalla, un /log/
+
+#+REVEAL: split
+
+Para esto tenemos la "función":
+
+#+begin_src cpp
+UE_LOG(LogTemp, Warning, TEXT("Mensaje"));
+#+end_src
+
+(No, técnicamente no es una función...)
+
+#+REVEAL: split
+
+Por supuesto, podemos buscar la [[https://unrealcommunity.wiki/logging-lgpidy6i][información en Internet]]
+
+*/Aviso/*: la calidad de la documentación del API de UE es irregular
+
+
+#+REVEAL: split
+
+Ahora, en ~BeginPlay~ de nuestra nueva clase, creemos un mensaje (debajo de la llamada a ~Super~):
+
+#+begin_src cpp
+UE_LOG(LogTemp, Warning, TEXT("¡Preparado y listo!")); 
+#+end_src
+
+- =LogTemp= es el *log* al que escribiremos
+- =Warning= imprime un mensaje en amarillo
+- =TEXT= es una macro que adapta un =string=
+
+#+REVEAL: split
+
+Ahora vamos a compilar nuestro proyecto:
+
+#+caption: Botón de compilar (abajo a la derecha)
+[[file:imgs/boton_compilar.png]]
+
+#+REVEAL: split
+
+- Podemos /construir la solución/ desde Visual Studio
+- O podemos guardar el archivo, volver al editor de Unreal, y compilar desde ahí
+
+#+REVEAL: split
+
+(Mi experiencia es que era más robusto si se hacía desde Unreal, pero según avanzan las versiones todo parece funcionar mejor)
+
+#+REVEAL: split
+
+- Primero mostramos la consola de salida: =Window= $\rightarrow$ =Output Log=
+- Después damos a =Play= en UE
+- Deberíamos ver "¡Preparado y listo!" en el log
+
+* Usando UE como código
+
+Aunque veamos UE como un entorno integrado, cuando lo ejecutamos realmente estamos arrancando el *motor de UE* completo
+
+#+REVEAL: split
+
+UE nos permite trabajar de forma más clásica, arrancado un IDE (VisualStudio) y compilando y depurando desde él
+
+** /Intellisense/
+
+Veréis que el marcado de errores (el subrayado rojo) puede tardar mucho
+
+De hecho, a veces será incorrecto
+
+Pasará lo mismo con el autocompletado
+
+#+REVEAL: split
+
+Esto se debe a que la base de código en enorme, y los analizadores tardan un poco
+
+#+REVEAL: split
+
+En algunas ocasiones, /Intellisense/ dará errores, y aún así compilará
+
+En algunos casos, esos errores desaparecerán incluyendo archivos de cabecera (la compilación no los necesita, pero el analizador, sí)
+
+** Depurar código C++ con UE
+
+Para depurar (/debug/) el código escrito en C++ hay que arrancar el editor de UE en modo depuración, desde el IDE (Visual Studio, por ejemplo)
+
+#+REVEAL: split
+
+Si queremos poder depurar /todo el engine/ hay que haber instalado los "Editor symbols for debugging" en UE (se puede hacer desde el Epic Launcher)
+
+#+REVEAL: split
+
+Ocupan mucho, pero nos permite entrar en el código del motor para ver qué está pasando
+
+Obviamente, esto solo lo haremos cuando sea estrictamente necesario y cuando sepamos lo que estamos haciendo
+
+#+REVEAL: split
+
+Para depurar desde VS, vamos a elegir una configuración de lanzamiento, y lanzar desde el IDE
+
+#+REVEAL: split
+
+Dependiendo de la configuración que escojamos, tendremos diferentes
+[[https://docs.unrealengine.com/latest/en-US/build-configurations-reference-for-unreal-engine/][configuraciones]]:
+
+- Juego solo /desarrollo/
+- Juego + editor /desarrollo/ (probablemente, ésta)
+- Juego solo /depuración/
+- Juego + editor /depuración/
+
+#+REVEAL: split
+
+Yo suelo arrancar con /juego + editor en desarrollo/, con eso tengo los símbolos que necesito y puedo editar de forma normal
+
+#+REVEAL: split
+
+Para otros IDEs (Clion, VSCode, Xcode), el proceso es similar
+
+Lo único que tenéis que tener en cuenta es saber compilar y lanzar en la configuración apropiada
+
+#+REVEAL: split
+
+Una manera de trabajar alternativa a abrir UE a través del Epic Games Launcher es:
+
+- Abrir IDE (Visual Studio)
+- Arrancar la configuración de /editor en desarrollo/ (que abre UE)
+- Editar y depurar desde VS
+- Reconstruir y ejecutar desde UE
+
+# #+REVEAL: split
+
+# ** /Hot reload/
+
+# Cuando UE detecta un cambio en los binarios que representan el juego,
+# los recarga *sin tener que reiniciar*
+
+# #+REVEAL: split
+
+# Esto quiere decir que nosotros compilamos el código (como una biblioteca
+# dinámica), y se recarga solo
+
+# #+REVEAL: split
+
+# También quiere decir que esta parte no involucra directamente a Visual
+# Studio (o el IDE que usemos), sino que cualquier proceso de compilación,
+# venga de donde venga, lanzará la recarga automática
+
+# #+REVEAL: split
+
+# Esa es la razón por la que podemos compilar tanto desde VS como desde UE
+# (el resultado son los mismos archivos)
+
+# #+REVEAL: split
+
+# ** Problemas con Hot Reload
+# :PROPERTIES:
+# :CUSTOM_ID: problemas-con-hot-reload
+# :END:
+
+# #+REVEAL: split
+
+# /Hot reload/ tiene problemas, y no es lo más robusto del mundo
+
+# Aunque /Hot Reload/ es usable, hay una alternativa mejor, /Live coding/
+
+# #+REVEAL: split
+
+** Live coding
+
+Hasta UE5, el proceso de programa en UE con C++ sin reiniciar el juego/editor con cada cambio se hacía con una tecnología llamada /hot reload/
+
+Ahora (y en las últimas versiones de UE4) usamos /live coding/, está habilitado por defecto
+
+#+REVEAL: split
+
+# #+caption: Para habilitar /Live coding/
+# [[file:enable_live_coding.png]]
+
+# #+REVEAL: split
+
+Cada vez que queramos compilar, usamos *Ctrl-Alt-F11*
+
+
+** Visual Studio y modificaciones
+
+
+#+caption: /Live coding/ funciona con casi todos los cambios de código (.cpp/.h), pero si cambiamos la estructura de clases, deberemos reiniciar el editor de UE
+#+attr_html: :width 600 
+[[file:imgs/recargar_live_coding.png]]
+
+#+REVEAL: split
+
+También podemos "omitir" y seguir trabajando (pero no recargará, claro)
+
+
+** Ejecutar el proyecto sin el editor
+
+#+REVEAL: split
+
+También podemos arrancar el proyecto sin el editor
+
+
+
+#+caption: Para eso, arrancamos con la opción /Development/ (sin /Editor/)
+[[file:development_config.png]]
+
+#+REVEAL: split
+
+Es posible que nos salga el error de que falta contenido
+
+Es porque no hemos "empaquetado el proyecto"
+
+
+#+caption: Volvemos al editor y empaquetamos
+[[file:imgs/empaquetar_proyecto.png]]
+
+* Desarrollando en UE desde C++
+
+#+REVEAL: split
+
+Ya sabéis cuál es el flujo de trabajo con /blueprints/
+
+A partir de aquí, vamos a ver cuál es el flujo de trabajo de generación de código con C++
+
+#+REVEAL: split
+
+Veremos que la API es muy similar, y que mucho de lo que hacemos con blueprints tiene un aspecto muy parecido en C++
+
+#+REVEAL: split
+
+Probemos la reutilización de código
+
+Añadamos el componente que hemos creado a otro =Static Mesh=
+
+=Details= $\rightarrow$ =Add= $\rightarrow$ buscar el componente apropiado escribiendo su nombre, y añadirlo
+
+
+#+REVEAL: split
+
+Ahora vamos a acceder a la información de la entidad desde el componente
+
+Volvamos a la implementación del componente que acabamos de crear
+
+En la implementación, el el método =BeginPlay=, añadamos una llamada a =GetOwner()=
+
+#+REVEAL: split
+
+=GetOwner()= nos da un puntero al =Actor= dentro del cual está el componente, y podemos acceder, entonces, a los métodos generales, como =GetName()= y otros
+
+=GetName()= nos da el nombre del =Actor= (tal como lo hayamos creado en el editor) en forma de =FString=
+
+#+REVEAL: split
+
+Recordad acceder siempre a [[https://docs.unrealengine.com/latest/en-US/fstring-in-unreal-engine/][la documentación]]: =FString= es una cadena mutable en Unreal
+
+#+begin_src cpp
+FString name = GetOwner()->GetName();
+// o también
+auto name = GetOwner()->GetName();
+#+end_src
+
+#+REVEAL: split
+
+Pero usar un =FString= en Unreal, dentro de =UE_LOG=, no es trivial:
+hace falta insertarlo en la macro, usar caracteres de formato (como en
+=printf=) y hacer algo que /parece/ una de-referencia:
+
+#+begin_src cpp
+FString name = GetOwner()->GetName();
+UE_LOG(LogTemp, Warning, TEXT("Preparado y listo, soy %s"), *name);
+#+end_src
+
+#+REVEAL: split
+
+Hay [[https://docs.unrealengine.com/latest/en-US/string-handling-in-unreal-engine/][varios tipos de cadenas]] en Unreal
+
+
+** Tipos de cadenas de texto en UE
+
+- =FName=, ligera, almacenada en tabla, inmutable
+- =FText=, localización, inmutable
+- =FString=, mutable, no muy eficiente
+
+La macro =TEXT()= evita que una cadena de caracteres literal (un /string/ puesto entre comillas en el código fuente) esté en =ANSI=
+
+#+REVEAL: split
+
+El asterisco que hemos visto antes, realmente, es una sobrecarga particular del operador en UE
+
+Hace que el =FString= devuelva su =TCHAR= interno
+
+** Problema
+
+Dado que en Unreal se hace un uso tan extensivo de macros, si cometemos un error (fijémonos en =name=):
+
+#+begin_src cpp
+FString name = GetOwner()->GetName();
+UE_LOG(LogTemp, Warning, TEXT("Hola, soy %s"), name);
+#+end_src
+
+#+REVEAL: split
+
+Nos dará un error complejo y además informará de líneas de código que ni siquiera son nuestras (limitaciones de las macros en C++)
+
+#+REVEAL: split
+
+Además de =name=, que nos dará el ID, podemos ver el nombre del objecto en el outline (su /label/, que es una propiedad solo del editor):
+
+#+begin_src cpp
+FString label = GetOwner()->GetActorLabel();
+FString label_y_si_no_hay_name = GetOwner()->GetActorNameOrLabel();
+#+end_src
+
+* Más información: vectores
+
+#+REVEAL: split
+
+Ahora vamos a añadir información extra sobre el objeto (en el mismo componente):
+
+#+begin_src cpp
+FString name = GetOwner()->GetActorLabel();
+FString position { "(x, y, z)" };
+UE_LOG(LogTemp,
+       Warning,
+       TEXT("Preparado y listo, soy %s y estoy en %s"),
+       *name,
+       *position); 
+#+end_src
+
+#+REVEAL: split
+
+Ahora, reemplazad la cadena =position= por la posición del objeto que contiene este componente
+
+Recordad que VS completa código, y que el completado es /fuzzy/ (no hace falta escribir la palabra exactamente en orden)
+
+Mirad, desde VS, qué tipo devuelve cada método para saber cómo usarlo
+
+#+REVEAL: split
+
+Cuando sepáis un tipo/clase que no sepáis usar, [[https://docs.unrealengine.com/latest/en-US/API/Runtime/Core/Math/FTransform/][buscad en Google]]:
+
+#+begin_example
+ftransform unreal
+#+end_example
+
+Recordad también que, una vez que obtengáis la posición, tendréis que convertirla a cadena
+
+#+REVEAL: split
+
+Tiene que tener, aproximadamente, este aspecto:
+
+#+begin_src cpp
+FString name = GetOwner()->GetActorLabel();
+FString position = GetOwner()->GetTransform().
+       GetLocation().ToString();
+UE_LOG(LogTemp,
+       Warning,
+       TEXT("Preparado y listo, soy %s y estoy en %s"),
+       *name,
+       *position);
+#+end_src
+
+#+REVEAL: split
+
+Ahora vamos a darle un poco más de interés a lo que podemos hacer
+
+Creemos un cubo, y lo modificaremos, a través de un componente, desde C++
+
+#+REVEAL: split
+
+Así,
+
+- creemos un objeto nuevo,
+- añadámoslo a la escena,
+- y creemos un nuevo componente en C++
+
+#+REVEAL: split
+
+Luego,
+
+- en el componente, en =BeginPlay=, cambiemos la rotación
+- con un nuevo =FRotator=,
+- ayudándonos con el /IntelliSense/ en VS
+
+#+REVEAL: split
+
+Se puede usar el constructor que se quiera, pero el más sencillo es el de =roll=, =pitch= y =yaw=
+
+#+REVEAL: split
+
+#+caption: Antes de nada, que no se nos olvide activar la propiedad =Movable= en el objeto
+[[file:imgs/poner_movable.png]]
+
+#+REVEAL: split
+
+#+begin_src cpp
+GetOwner()->SetActorRotation(FRotator(34.0f, 90.0f, 0.0f));
+// o también
+GetOwner()->SetActorRotation({ 34.0f, 0.0f, 0.0f });
+#+end_src
+
+#+BEGIN_NOTES
+=GetOwner()->GetTransform().SetRotation(f.Quaternion());= solía funcionar en la 4.18 creo recordar, ya no
+#+END_NOTES
+
+* Crear y destruir elementos desde C++
+
+#+REVEAL: split
+
+Vamos a crear un =Actor= en UE, pero con una clase C++ (*no* con /blueprints/)
+
+#+caption: =Tools= $\rightarrow$ =New C++ class...=, y creamos una clase de tipo =Actor=
+#+attr_html: :height 450
+[[file:imgs/nueva_clase_actor.png]]
+
+#+REVEAL: split
+
+Después, arrastramos el nuevo actor desde el /Content Browser/ hasta la escena
+
+#+REVEAL: split
+
+*¡No ejecutéis el proyecto de momento!*
+
+#+REVEAL: split
+
+Una vez creada la clase, vamos a crear un componente dentro de ella
+
+#+REVEAL: split
+
+En el =.h=, un atributo (puede ser privado, no importa mucho ahora):
+
+#+begin_src cpp
+USphereComponent *_esfera;
+#+end_src
+
+En el =.cpp= (en el *constructor*), tras ~bCanEverTick~:
+
+#+begin_src cpp
+_esfera = CreateDefaultSubobject<USphereComponent>(TEXT("esfera"));
+RootComponent = _esfera; // componente que da posición al actor
+_esfera->InitSphereRadius(50.0f);
+_esfera->SetCollisionProfileName(TEXT("Pawn"));
+#+end_src
+
+#+REVEAL: split
+
+(Esto fallará)
+
+
+#+BEGIN_NOTES
+- explica lo que es el =RootComponent=
+[[https://answers.unrealengine.com/questions/317148/newobject-or-createdefaultsubobject.html][createdefaultsubobject vs newobject]]: createdefault lo ve el editor, =NewObject= no
+#+END_NOTES
+
+
+#+REVEAL: split
+
+Compilamos y falla porque hemos olvidado incluir la cabecera donde está el código:
+
+#+begin_src cpp
+#include "Components/SphereComponent.h"
+#+end_src
+
+Y tiene que estar antes que:
+
+#+begin_src cpp
+#include "NombreDeMiActor.generated.h"
+#+end_src
+
+#+REVEAL: split
+
+Sin embargo, aún no vemos nada: /hemos creado un objeto esfera sin malla, y no le hemos dado ningún componente malla/
+
+#+REVEAL: split
+
+1. Podemos añadir el /Starter Content/ si no lo tenemos aún (Content Browser $\rightarrow$ "Add New" $\rightarrow$ "Add Feature or
+   Content Pack...") (/aunque hay alternativa/)
+2. Añadimos más código en el constructor anterior (debajo)
+
+
+#+REVEAL: split
+
+Con /Starter Content/:
+
+#+begin_src cpp
+UStaticMeshComponent *malla_esfera =
+       CreateDefaultSubobject<UStaticMeshComponent>(
+         TEXT("malla_esfera"));
+malla_esfera->SetupAttachment(RootComponent);
+static ConstructorHelpers::FObjectFinder<UStaticMesh> 
+       SphereVisualAsset(
+         TEXT("/Game/StarterContent/Shapes/Shape_Sphere"));
+malla_esfera->SetStaticMesh(SphereVisualAsset.Object);
+#+end_src
+
+#+REVEAL: split
+
+También podemos añadir la esfera *sin* el /Starter Content/
+
+#+begin_src cpp
+static ConstructorHelpers::FObjectFinder<UStaticMesh> 
+       SphereVisualAsset(
+         TEXT("/Engine/BasicShapes/Sphere"));
+#+end_src
+
+#+REVEAL: split
+
+Ahora podemos añadir al mapa nuestra nueva esfera creada con C++
+
+#+REVEAL: split
+
+Todo ha sido gracias a =ConstructorHelpers::FObjectFinder=:
+
+#+begin_src cpp
+// `static` hace que solo se cree la variable en la primera
+// llamada, con lo que llamar más veces al constructor
+// no lanzará una búsqueda de "asset" adicional
+static ConstructorHelpers::FObjectFinder<UStaticMesh>
+       SphereVisualAsset(
+              TEXT("/Game/StarterContent/Shapes/Shape_Sphere"));
+#+end_src
+
+#+REVEAL: split
+
+=static= aquí hace que solo haya una instancia del assets compartida por todos las =Actor=s, así /solo se carga la primera vez/
+
+Si no se comparte asset, igual no hace falta el =static=
+
+#+BEGIN_NOTES
+[[https://forums.unrealengine.com/development-discussion/c-gameplay-programming/66143-constructorhelpers-fobjectfinder-vs-static-constructorhelpers-fobjectfinder]]
+#+END_NOTES
+
+#+REVEAL: split
+
+Fijémonos en que poner el código en el constructor hace que el objeto se instancie correctamente en el editor, no hace falta estar ejecutando el juego para ver la nueva esfera
+
+#+REVEAL: split
+
+Si cambiamos el asset referenciado y recompilamos, UE no recargará estos assets que haya en el nivel
+
+Por ejemplo, si cambiamos de esfera a cono, seguiremos viendo una esfera
+
+/Será necesario volver a abrir el nivel/
+
+* Ciclo de vida de un =Actor=
+
+#+REVEAL: split
+
+#+caption: [[https://docs.unrealengine.com/latest/en-US/unreal-engine-actor-lifecycle/][Ciclo de vida de un actor en UE]]
+#+attr_html: :height 500
+[[file:imgs/ciclo_actor.jpg]]
+
+
+#+REVEAL: split
+
+Hay más métodos de =Actor= que pueden ser útiles (las llamadas están en orden):
+
+#+REVEAL: split
+
+1. =PostLoad/PostActorCreated= - Configurar un actor en la construcción (=PostLoad= es para serializados, =PostActorCreated= para "spawneados")
+2. =AActor::OnConstruction= - Construcción e inicialización de los /blueprints/
+3. =AActor::PreInitializeComponents= - Llamado /antes/ de =InitializeComponent= en cada uno de los componentes del =Actor=
+
+#+REVEAL: split
+
+1. =UActorComponent::InitializeComponent= - Inicialización de cada componente
+2. =AActor::PostInitializeComponents= - Llamado /después/ de la inicialización de los componentes
+3. =AActor::BeginPlay= - Llamado cuando empieza el nivel
+
+* Spawning
+
+#+REVEAL: split
+
+Muchas veces queremos crear /instancias/ de actores que ya tenemos modelados (como proyectiles)
+
+UE, en su clase /mundo/, nos ofrece =UWorld::SpawnActor=
+
+#+REVEAL: split
+
+Pongamos esto en el =Tick= de nuestro actor C++, debajo de la llamado al ~Tick~ de ~Super~:
+
+#+begin_src cpp
+FTransform spawnedTransform = GetTransform();
+spawnedTransform.AddToTranslation( FVector{ 100.f, 0.f, 0.f } );
+GetWorld()->SpawnActor<AActor>(AActor::StaticClass(),
+                                    spawnedTransform);
+#+end_src
+
+Ejecutemos el juego, hagamos =Eject= (=F8=) y veamos cómo evoluciona la escena
+
+#+BEGIN_NOTES
+- si van bien se puede hacer con los uproperty
+- cada ttr segundos tendría que spawnearse, pero no verse en la lista porque es una cutrada esto, que no se preocupen
+#+END_NOTES
+
+#+REVEAL: split
+
+#+caption: En ejecución podemos ver cómo se crean muchos actores
+[[file:imgs/muchos_actores.png]]
+
+** Destruir actores
+
+En nuestro ejemplo podemos destruir, pasado un tiempo, un actor o actores
+
+Para destruir un actor hay que usar:
+
+#+begin_src cpp
+_actor->Destroy();
+#+end_src
+
+- Hay que tener el =Actor= guardado en alguna parte
+- Hay que manejar el tiempo
+
+** Una solución
+
+
+#+REVEAL: split
+
+En el =.cpp= (en ~Tick~):
+
+#+begin_src cpp
+if ((_counterDelete -= DeltaTime) <= 0.0f) {
+       _counterDelete = CD;
+       for(auto &a : _spawned) {
+              a->Destroy();
+       }
+       _spawned.Empty();
+}
+#+end_src
+
+#+REVEAL: split
+
+Y en el =.h= (en efecto, aún no sabemos qué es un =TArray=):
+
+#+begin_src cpp
+private:
+  TArray<AActor*> _spawned;
+  static constexpr float CD = 5.0f;
+  float _counterDelete = CD;
+#+end_src
+
+#+REVEAL: split
+
+Y, para meter en el =TArray= (ahora veremos más sobre esto):
+
+#+begin_src cpp
+_spawned.Add(newActor);
+#+end_src
+
+* Buscar documentación
+
+
+#+REVEAL: split
+
+El API de Unreal Engine es /enorme/
+
+Es imposible acordarse de todas las clases y métodos, es necesario trabajar siempre con la documentación a mano
+
+#+REVEAL: split
+
+Desde la [[https://docs.unrealengine.com/latest/en-US/API/][página web del API de Unreal Engine]] se puede acceder a toda la documentación
+
+
+Se puede buscar en la API por nombre de clase en el buscador de la página
+
+Y, para ver la documentación C++, hay que elegir la opcióncorrespondiente
+
+#+caption: Elegir la información de C++ API
+[[file:imgs/buscar_api.png]]
+
+* Ejercicios
+
+#+REVEAL: split
+
+- Básico: Implementar todos los ejemplos
+- Avanzado: hacer una torreta que dispare aleatoriamente a varios objetivos fijos
+
+#+BEGIN_NOTES
+=FindLookAtRotation=
+#+END_NOTES

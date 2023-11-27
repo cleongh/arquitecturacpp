@@ -1,0 +1,779 @@
+# -*- encoding:utf-8; -*-
+#+title: Creación de un prototipo en Unreal con C++
+#+author: Carlos León
+#+EMAIL: cleon@ucm.es
+#+department: Department of Software Engineering and Artificial Intelligence
+#+institution: Computer Science Faculty, Universidad Complutense de Madrid
+#+address: Calle Profesor José García Santesmases, 9, 28040 Madrid, Spain
+#+LANGUAGE: es
+#+OPTIONS: toc:nil reveal_history:t timestamp:nil date:nil author:t email:t num:nil reveal_single_file:nil inline:nil
+#+REVEAL_INIT_OPTIONS: slideNumber:true
+#+reveal_mousewheel:t
+#+REVEAL_TRANS: none
+#+REVEAL_EXTRA_CSS: base.css
+#+addbibresource: ~/articulos/bibliografia.bib
+#+BIBLIOGRAPHY: ~/articulos/bibliografia.bib
+#+language: es
+
+
+* Crear juegos con Unreal en C++
+
+#+REVEAL: split
+
+Ahora que ya hemos visto todo el proceso fundamental de interacción UE con C++, vamos a crear contenido
+
+#+REVEAL: split
+
+Vamos a hacer un videojuego tipo Pac-Man sencillo
+
+Vamos a usar assets sencillos (/static meshes/) para crear paredes de laberinto
+
+(Se puede usar [[https://docs.unrealengine.com/latest/en-US/geometry-brush-actors-in-unreal-engine/][geometría BSP]] si queremos hacerlo más elaborado)
+
+#+REVEAL: split
+
+Habrá un laberinto con puntos blancos (que nos darán una puntuación determinada) y una fruta que deberemos tocar para acabar, rodeada por una celda
+
+#+REVEAL: split
+
+En nuestro juego, cuando hayamos conseguido suficientes puntos, la "celda" que rodea la fruta final se levantará y podremos coger la fruta
+
+#+REVEAL: split
+
+La celda será un objeto normal físico, y la activación consistirá en que una celda suba (en la posición de la fruta) para que, cuando nos toquemos la fruta, el juego se acabe
+
+* Nuestro Game Mode
+
+#+REVEAL: split
+
+Como ya sabéis, un /modo de juego/ o =Game Mode= es el conjunto de reglas de inicio, modificación y terminación de juego (cómo se crean los jugadores, por ejemplo)
+
+#+REVEAL: split
+
+Un =Game State= es el estado en el que está el juego, y es compartido por todos los clientes/jugadores
+
+Es dependiente del =Game Mode=, y típicamente almacena información global
+
+** Añadir componentes al =DefaultPawn=
+
+Uno de los "problemas" que nos encontramos en Unreal es que, hasta que el juego no se inicia, no se crea realmente el jugador principal
+
+#+REVEAL: split
+
+Como no está creado en el editor, no es posible modificar a priori sus propiedades, por ejemplo, sus /componentes/
+
+#+REVEAL: split
+
+En el caso de C++, lo que vamos a hacer es asignarlo desde un /Game Mode/ propio en código
+
+#+REVEAL: split
+
+Por defecto, UE nos ha creado una clase que se llamará =A[NOMBRE]GameModeBase=, y que no hace nada
+
+#+REVEAL: split
+
+Nosotros vamos a modificarla y añadir un constructor que establece cuál es el /Pawn/ por defecto:
+
+#+begin_src cpp
+AMazeGameModeBase::AMazeGameModeBase()
+{
+  // Aún no tenemos `ACPPAdventurer`...
+  DefaultPawnClass = ACPPAdventurer::StaticClass();
+}
+#+end_src
+
+#+REVEAL: split
+
+Lo siguiente es crear nuestro nuevo jugador principal
+
+Tendrá que ser un /Pawn/ para que el controlador por defecto lo pueda manejar
+
+#+REVEAL: split
+
+Creamos un =Pawn= normal, de C++
+
+
+#+REVEAL: split
+
+Ahora, desde el constructor de nuestro nuevo actor en C++, creamos algunos componentes:
+
+#+begin_src cpp
+ACPPAdventurer::ACPPAdventurer()
+{
+  PrimaryActorTick.bCanEverTick = true;
+
+  // Damos forma para las colisiones
+  auto shape = CreateDefaultSubobject<USphereComponent>(TEXT("esfera"));
+  RootComponent = shape;
+  shape->InitSphereRadius(50.0f);
+  shape->SetCollisionProfileName(TEXT("Pawn"));
+  
+  // Así se crea un componente para este actor
+  auto move = CreateDefaultSubobject<UFloatingPawnMovement>(
+    TEXT("Movement component"));
+  move->MaxSpeed = 1200.0f;
+}
+#+end_src
+
+#+REVEAL: split
+
+La clase =UFloatingPawnMovement= no estará reconocida por el compilador, porque falta el ~#include~
+
+#+caption: La manera más secilla es buscar la clase en Internet, y en la documentación de Unreal veremos la ruta del ~#include~
+#+attr_html: :width 600
+[[file:imgs/includes_extra.png]]
+
+#+REVEAL: split
+
+Para darle forma física al actor que acabamos de crear, le podemos poner desde C++ código para que sea un cubo
+
+Es igual que en la clase anterior, pero donde ponía =sphere=, tiene que poner =box= (por ejemplo)
+
+#+REVEAL: split
+
+Como vamos a hacer un juego en tercera persona, creamos un /spring arm/ y una cámara:
+
+#+begin_src cpp
+auto arm =
+   CreateDefaultSubobject<USpringArmComponent>(
+     TEXT("SpringArm"));
+arm->SetupAttachment(RootComponent);
+
+auto _camera = CreateDefaultSubobject<UCameraComponent>(
+  TEXT("CameraPlayer"));
+_camera->SetupAttachment(arm);
+#+end_src
+
+
+#+REVEAL: split
+
+#+caption: También podemos crear una escena nueva, y asignarle el =Game Mode= correspondiente
+#+attr_html: :height 450
+[[file:imgs/asignar_game_mode.png]]
+
+
+# Y también le añadimos un componente de tipo =UInputComponent=
+
+# Con la misma sintaxis que los otros componentes, e incluyendo el =.h= correspondiente
+
+# #+REVEAL: split
+
+# UE5 incluye [[https://docs.unrealengine.com/5.3/en-US/enhanced-input-in-unreal-engine/][/Enhanced input/]], que añade una serie de mejoras sobre la entrada normal, pero no lo necesitaremos ahora
+
+
+* Gestión de memoria en Unreal Engine
+
+** =UObjects=
+
+Unreal tiene su propia gestión de la memoria
+
+Para ello, la jerarquía de clases tiene =UObject=, que son objectos (bastante genéricos) con recolección de basura
+
+#+REVEAL: split
+
+A no ser que sepamos muy bien lo que estamos haciendo, no hay que crear =UObjects= con ~new~, sino con [[https://docs.unrealengine.com/latest/en-US/creating-objects-in-unreal-engine/][los métodos de Unreal]]:
+
+- ~NewObject~
+- ~SpawnActor~
+- ~CreateDefaultSubobject~
+
+#+REVEAL: split
+
+Todos estos métodos llevan el tipo como parámetro de plantilla:
+
+#+begin_src cpp
+auto input_modifier = NewObject<UInputModifierNegate>(this);
+#+end_src
+
+* /Smart pointers/
+
+Igual que en la libería estándar de C++, Unreal tiene [[https://docs.unrealengine.com/latest/en-US/smart-pointers-in-unreal-engine/][punteros inteligentes]]
+
+Son ~TUniquePtr~, ~TSharedPtr~ y ~TWeakPtr~ (igual que en =std::=)
+
+*No tienen que ser usados para =UObjects=*, ya que estos tienen un ciclo de vida distinto
+
+* TObjectPtr
+
+Unreal 5 tiene una versión más controlada de los [[https://unrealcommunity.wiki/pointer-types-m33pysxg][punteros a assets]] en el editor
+
+#+REVEAL: split
+
+Reemplazan los punteros "crudos" a assets, haciendo que se automatice la carga perezosa
+
+Además, cuando se construye en una versión que no es de editor, se optimiza
+
+En general, se recomienda su uso como reemplazo para =UPROPERTIES= (porque el beneficio está en el editor):
+
+#+begin_src cpp
+UPROPERTY(EditAnywhere)
+TObjectPtr<ACPPAdventurer> _adventurer;
+#+end_src
+
+#+REVEAL: split
+
+- =TObjectPtr<T>= (o simplemente el punto con el =UPROPERTY=) toma posesión (quizá compartida) de un asset
+- =TWeakObjectPtr<T>= es un puntero débil sin posesión, pero tiene el coste de comprobar que el objeto no ha sido limpida (=TObjectPtr= /nullifica/ las referencias, es más eficiente)
+- =TSoftObjectPtr<T>= es como un =weak=, pero tiene funcionalidad para la carga perezosa
+
+
+* Decorador
+
+Añadimos un =Actor C++= que tenga una propiedad de editor (=UPROPERTY=) para establecer su malla:
+
+
+#+REVEAL: split
+
+En el =.h=:
+
+#+begin_src cpp
+UPROPERTY(EditAnywhere, Category = "Estetica")
+TSoftObjectPtr<UStaticMesh> _malla_externa;
+
+// Esto *no necesita* TSoftObjectPtr porque
+// no se va a modificar en el editor
+UStaticMeshComponent* _malla_component;
+#+end_src
+
+
+#+REVEAL: split
+
+En el constructor:
+
+#+begin_src cpp
+ADecorador::ADecorador()
+{
+  // ...
+  auto colision = CreateDefaultSubobject<USphereComponent>(TEXT("esfera"));
+  RootComponent = colision;
+  colision->InitSphereRadius(50.0f);
+  colision->SetCollisionProfileName(TEXT("Pawn"));
+
+  _malla_component =
+    CreateDefaultSubobject<UStaticMeshComponent>(
+	TEXT("malla"));
+  _malla_component->SetupAttachment(RootComponent);
+}
+#+end_src
+
+
+#+REVEAL: split
+
+En =BeginPlay=:
+
+#+begin_src cpp
+void ADecorador::BeginPlay()
+{
+  // ...
+  _malla_component->SetStaticMesh(_malla_externa.LoadSynchronous());	
+}
+#+end_src
+
+#+REVEAL: split
+
+Añadimos una instancia a la escena, asignamos su malla, y se verá instanciada al darle a =Play=
+
+
+* Entrada con ~Enhanced Input~
+
+** Entrada hasta UE4
+
+UE4 usa un motor de entrada más sencillo que UE $\geq 5$
+
+** Enhanced Input
+
+Para que UE reconozca el subsistema de entrada nuevo, hay que añadir la cadena ~"EnhancedInput"~ al archivo =[NOMBRE_PROYECTO].Build.cs=, que estará en el mismo sitio que los =.cpp=:
+
+#+begin_src csharp
+PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+#+end_src
+
+#+REVEAL: split
+
+#+caption: Tenemos que asegurarnos (seguramente estará así por defecto) de que el subsistema mejorado está seleccionado por defecto
+#+attr_html: :height 300
+[[file:imgs/configurar_enhanced_input.png]]
+
+#+REVEAL: split
+
+En la declaración de la clase de nuestro personaje (el =.h=), creamos punteros a las clases de Enhanced Input que antes hacíamos con Blueprints:
+
+#+begin_src cpp
+#include "InputMappingContext.h"
+#include "EnhancedInputComponent.h"
+// ...
+
+// El mapping context
+UInputMappingContext* _input_mapping_context;
+
+// Una acción (puede haber más)
+UInputAction* _move;
+#+end_src
+
+#+REVEAL: split
+
+En el constructor, las instanciamos:
+
+#+begin_src cpp
+_move = CreateDefaultSubobject<UInputAction>(TEXT("MoveAction"));
+
+_input_mapping_context = CreateDefaultSubobject<UInputMappingContext>(TEXT("NormalMapping"));	
+#+end_src
+
+#+REVEAL: split
+
+En en =.cpp= de nuestro =Pawn= vamos a configurar la entrada para que enlace los mappings y las acciones:
+
+#+begin_src cpp
+#include "EnhancedInputSubsystems.h"
+#include "Engine/LocalPlayer.h" 
+// ...
+void ACPPAdventurer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	auto controller = Cast<APlayerController>(GetController());
+	if (auto system = controller->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>()) {
+		if (_input_mapping_context) {
+			// el "1" es la prioridad del mapeo, cuanto más alta, más prioritario
+			system->AddMappingContext(_input_mapping_context, 1);
+
+			_move->bConsumeInput = true;
+			_move->ValueType = EInputActionValueType::Axis1D;
+
+			// hay más maneras de instanciar la tecla (FKey("W"))
+			_input_mapping_context->MapKey(_move, EKeys::W);
+
+			auto & mapping = _input_mapping_context->MapKey(_move, EKeys::S);
+			mapping.Modifiers.Add(NewObject<UInputModifierNegate>(this));
+		}
+	}
+
+	auto eic = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	eic->BindAction(_move, ETriggerEvent::Triggered, this, &ACPPAdventurer::Move);
+}
+#+end_src
+
+
+* Propiedades para el editor
+
+#+REVEAL: split
+
+Una de las macros más usadas es =UPROPERTY=
+
+=UPROPERTY= se usa para hacer que ciertos atributos de nuestro código (atributos de clase) se /expongan/ al editor y puedan ser gestionados gráficamente
+
+#+REVEAL: split
+
+Por ejemplo, podemos configurar la altura de la celda que rodea a la fruta con esta técnica
+
+#+REVEAL: split
+
+Creamos un Actor para la celda (como /blueprint/)
+
+#+caption: Se puede hacer la celda con varios =Cube= en el blueprint
+#+attr_html: :height 500
+[[file:imgs/celda.png]]
+
+#+REVEAL: split
+
+Y creamos un componente en C++ para la celda
+
+Vamos a nuestro componente de subir la celda y creamos un atributo de altura final que tendrá cuando tengamos todos los puntos:
+
+#+begin_src cpp
+private:
+    double _height = 90.0f;
+#+end_src
+
+#+REVEAL: split
+
+Para que ese atributo tenga uso en el editor, tenemos que /marcarlo/ como propiedad de Unreal
+
+=URPOPERTY= es para eso:
+
+#+begin_src cpp
+private:
+    UPROPERTY(VisibleAnywhere)
+    double _height = 90.0f;
+#+end_src
+
+#+REVEAL: split
+
+*Importante*
+
+Como ya dijimos, no olvidemos hacer la entidad =Movable= para que sus propiedades físicas se puedan cambiar durante la ejecución
+
+#+caption: Hacer un objeto =Movable=
+#+attr_html: :height 200
+[[file:imgs/celda_movable.png]]
+
+#+REVEAL: split
+
+Podemos hacer propiedades de varios tipos
+
+Por ejemplo, una propiedad de cadena de texto nueva, esta vez que *se pueda editar desde cualquier parte del editor de Unreal*
+
+#+REVEAL: split
+
+Será algo parecido a esto:
+
+#+begin_src cpp
+private:
+    // Atención a `EditAnywhere`
+    UPROPERTY(EditAnywhere)
+    FString _text;
+#+end_src
+
+
+** Relaciones entre entidades
+
+Hay una relación de dependencia entre nuestro personaje principal y nuestra celda
+
+Necesitamos una manera de decirle a la celda con qué =Actor= tiene que interactuar
+
+
+#+REVEAL: split
+
+
+Crearemos una =UPROPERTY(EditAnywhere)= en el componente de subida que sea de tipo =ACPPAdventurer=
+
+#+REVEAL: split
+
+Idealmente, estamos creando un componente genérico que permita trabajar con cualquier =ACPPAdventurer=
+
+Pero /nuestro héroe se crea en tiempo de ejecución, no antes/
+
+* Recordatorio: Controller y Pawn
+
+#+REVEAL: split
+
+En Unreal, los cuerpos físicos son =Pawn=, y son movidos por controladores
+
+En este caso, por un =PlayerController=
+
+La idea es que, desde el punto de vista de la arquitectura, el controlador pueda ser sustituido, y un mismo =Pawn= pueda ser manejado a través de diferentes controladores
+
+#+REVEAL: split
+
+Hasta ahora habíamos trabajado con acceso desde /abajo/ hasta /arriba/, de forma que, con =GetOwner()=, habíamos tenido acceso a la entidad contenedora
+
+Pero es muy útil poder acceder de arriba a abajo, es decir, desde la entidad superior, a la entidad que está incluida en ella
+
+** =GetWorld=
+
+=GetWorld= nos da acceso a todo el mundo
+
+Todos los juegos en Unreal, por defecto, tienen un controlador principal
+
+Este controlador es parte del mundo, así que, desde el mundo, podemos acceder a él con =GetFirstPlayerController()=
+
+#+REVEAL: split
+
+Cuando un escenario arranca en Unreal, por defecto, el controlador es asignado a un jugador, a un =Pawn=
+
+Por tanto, podemos acceder a ese =Pawn=:
+
+#+begin_src cpp
+APawn * pawn = 
+  GetWorld()->GetFirstPlayerController()->
+    GetPawn();
+#+end_src
+
+#+REVEAL: split
+
+Por lo tanto, vamos a hacer que, /cuando se arranque el juego/, nuestra celda enlace la propiedad del componente de subida al jugador principal
+
+Lo haremos en el =BeginPlay()= del componente de bajada, aunque estemos creando por ahora una dependencia incorrecta
+
+(Recordad =GetWorld()->GetFirstPlayerController()->GetPawn()=)
+
+#+REVEAL: split
+
+Nos pasará que =GetPawn= nos devuelve un =Pawn= y no un =CPPAdventurer=
+
+Pero podemos hacer /casting/
+
+#+REVEAL: split
+
+#+begin_src cpp
+auto *pawn = GetWorld()->
+    GetFirstPlayerController()->
+    GetPawn();
+
+// puede devolver `nullptr` si el casting falla
+_adventurer = Cast<ACPPAdventurer>(pawn); 
+#+end_src
+
+#+REVEAL: split
+
+Así, vamos a hacer que en el =TickComponent= apropiado (es decir, en cada frame del juego, en el componente):
+
+- cuente los puntos del héroe
+- y, si tiene más puntos que un umbral dado (¡hacemos un =UPROPERTY=!), la celda se eleve
+
+
+* Ojo con los =colliders=
+
+#+REVEAL: split
+
+Tanto los =Collider= como los =Trigger= detectan contactos, pero los =Collider= tienen en cuenta la física
+
+Para que algo en Unreal tenga entidad física (colisiones físicas, por ejemplo), tenemos que cambiar sus propiedades de colisión
+
+#+REVEAL: split
+
+Las físicas en Unreal son muy complejas (¡y potentes!), nosotros vamos a centrarnos en los aspectos básicos aquí
+
+#+REVEAL: split
+
+Es muy posible (por ejemplo, la fruta) que no tenga ninguna información sobre colisión, así que tendremos que crearla
+
+(Aunque si lo habéis hecho paso a paso, debería tener una malla de colisión por defecto)
+
+#+REVEAL: split
+
+En el menú =Collision= podemos añadirle una colisión. Recordemos que estaremos *editando la malla*, con lo que todos los objetos que usen esa malla tendrán información de /colliders/
+
+#+REVEAL: split
+
+1. Hacemos clic derecho sobre la barrera o en el /World Outliner/
+2. Elegimos "Edit [Nombre de la barrera]"
+3. =Collision= $\rightarrow$ =Add Box Simplified Collision= (por ejemplo)
+
+#+REVEAL: split
+
+Ahora ya tenemos /un pequeño juego/
+
+Hay un desafío, y hay que seguir las reglas preestablecidas para solucionarlo
+
+
+* Acciones de entrada
+
+#+REVEAL: split
+
+Hay varias alternativas para arquitecturas de componentes
+
+En las más puras, los componentes no hablan entre sí directamente, y no pueden interactuar
+
+Por ejemplo, las arquitecturas de paso de mensajes
+
+#+REVEAL: split
+
+Aunque en Unreal se pueden hacer muchas alternativas, es bastante común que un componente de la entidad quiera acceder a otro componente de la misma entidad
+
+Para eso tenemos el método =FindComponentByClass=:
+
+#+begin_src cpp
+[UClaseDelComponente] componentHandle =
+    GetOwner()->FindComponentByClass<UClaseDelComponente>();
+#+end_src
+
+
+#+REVEAL: split
+
+Y el método =Move= (que está en la clase como un método normal), usa el valor del eje para mover el =Actor=
+
+#+begin_src cpp
+void ACPPAdventurer::Move(const FInputActionValue& v) {	
+	FVector forward = GetWorld()->
+		GetFirstPlayerController()->
+		PlayerCameraManager->
+		GetCameraRotation().Vector();
+	AddMovementInput(forward, v.GetMagnitude());
+}
+#+end_src
+
+#+REVEAL: split
+
+Hay que tener, obviamente, un =InputComponent= en el /blueprint/ de nuestro =Actor= para que todo funcione
+
+#+REVEAL: split
+
+Tendremos que haber *incluido la cabecera* del =InputComponent=:
+
+#+begin_src cpp
+#include "Components/InputComponent.h"
+#+end_src
+
+#+REVEAL: split
+
+Con esto ya podemos hacer los movimientos en 4 direcciones o, mejor aún, que el personaje rote cuando usamos /izquierda/ o /derecha/
+
+#+REVEAL: split
+
+Buscad cómo rotar en la ayuda de UE
+
+Para las rotaciones, en vez de =BindAxis()=, usaremos =BindAction()=
+
+Y moveremos la rotación del personaje
+
+#+REVEAL: split
+
+Los =FRotator= se pueden sumar con el operador =+= (está sobrecargado)
+
+* TArray
+
+#+REVEAL: split
+
+Como ya vimos, Unreal usa su propia estructura de /array/: [[https://docs.unrealengine.com/latest/en-US/API/Runtime/Core/Containers/TArray/][=TArray=]]
+
+Es una estructura con genéricos (igual que [[http://www.cplusplus.com/reference/vector/vector/][=vector=]] en STL)
+
+#+REVEAL: split
+
+Imaginemos que queremos saber, por ejemplo, cuántos puntos tenemos, almacenando los valores de cada punto que toquemos
+
+#+REVEAL: split
+
+
+Además, =TArray= implementa los [[http://www.cprogramming.com/c++11/c++11-ranged-for-loop.html][métodos apropiados de C++11]] para ser usado con la sintaxis moderna de =for=:
+
+#+begin_src cpp
+TArray <int> arrayDePuntos;
+for(int a : arrayDePuntos) {
+    a->...
+}
+#+end_src
+
+#+REVEAL: split
+
+Vamos, en nuestro héroe, a tener un =TArray= de enteros (un atributo de la clase)
+
+Cada elemento serán los puntos que dé cada punto blanco que nos hemos "comido"
+
+Tendremos métodos para sumar puntos (por parámetro) y un método para devolver los puntos actuales
+
+** Comer puntos
+
+Falta hacer la lógica de las "gemas"
+
+Van a ser actores que tengan un componente con un =UPROPERTY= de tipo entero que almacene los puntos que da cada instancia
+
+#+REVEAL: split
+
+Cuando despleguemos gemas por el mapa, vamos a ir, uno a uno, estableciendo los puntos que otorga cada una
+
+Obviamente se puede poner un valor por defecto en la clase de las gemas, y luego modificarlo si se quiere
+
+#+REVEAL: split
+
+En la celda pondremos un =UPROPERTY= con los puntos totales que son necesarios para subirla
+
+El componente de subir la celda, en su =TickComponent=, comprobará si los puntos totales del actor superan los de la propiedad anterior
+
+#+REVEAL: split
+
+Para que el personaje no choque con los elementos no físicos, hay que cambiar las propiedades
+
+Para que las cosas solapen (es decir, *no colisionen*), es mejor cambiar las propiedades físicas a =OverlapAll=
+
+#+caption: En el /blueprint/ de las gemas, en la esfera que tienen, establecemos "overlap"
+#+attr_html: :height 200
+[[file:imgs/overlap_all.png]]
+
+
+#+REVEAL: split
+
+Para asignar los puntos al jugador, vamos a hacer, desde el componente de los puntos, que cuando se haga /overlap/ con el jugador, se le sumen los puntos
+
+#+REVEAL: split
+
+Detectar /overlapping/ sólo hay que llamar al método:
+
+#+begin_src cpp
+actor->IsOverlappingActor(otroActor) // booleano
+#+end_src
+
+#+REVEAL: split
+
+También haremos que la gema se destruya con =Destroy()=
+
+#+begin_src cpp
+// Dentro del componente que detecta overlap con el jugador
+GetOwner()->Destroy();
+#+end_src
+
+#+REVEAL: split
+
+Y, una vez que sabemos hacer el "overlap", usamos el mismo método con la fruta para terminar el juego
+
+#+REVEAL: split
+
+Necesitaremos que la gema (y la fruta) tengan una referencia al jugador principal, igual que la celda
+
+
+* Para acabar
+
+
+#+REVEAL: split
+
+Una vez que solapen actor y fruta, vamos a pasar de escena
+
+#+REVEAL: split
+
+Para ello, simplemente creamos un nuevo componente C++ para la fruta, y en su =TickComponent=:
+
+#+begin_src cpp
+// si
+GetOwner()->IsOverlappingActor(/* player */)
+
+// entonces
+UGameplayStatics::OpenLevel(this, TEXT("Fin"));
+#+end_src
+
+* Ejercicios
+
+
+- Implementar la mecánica básica del juego
+  - No hemos contado cómo hacer la rotación, pero es igual que el avance
+- Mejorar el /gameplay/ haciendo que los giros del protagonista sean más suaves
+- Colocar mejor la cámara
+
+
+
+# #+REVEAL: split
+
+# En particular, esta sería una manera de utilizarlo:
+
+# #+begin_src cpp
+# UInputComponent inputHandle =
+#     GetOwner()->FindComponentByClass<UInputComponent>();
+# #+end_src
+
+# #+REVEAL: split
+
+
+# Para crear la acción que va a disparar el efecto de coger, tenemos que crear un =input= en Unreal
+
+# =Project settings= -> =Input=
+
+# y configuramos una acción, "avanzar"
+
+# #+REVEAL: split
+
+# #+caption: Configuración de acciones de entrada
+# [[file:2020-12-09-11-24-26.png]]
+
+# #+REVEAL: split
+
+# Una vez que lo hemos hecho, vamos al código de nuestro nuevo componente en el =Pawn= y hacemos que esa función, ="avanzar"=, mueva a nuestro personaje
+
+# #+REVEAL: split
+
+# Ahora vamos a enlazar la entrada del sistema al método =Mover=:
+
+# #+begin_src cpp
+# void AHero::BeginPlay()
+# {
+#     Super::BeginPlay();
+
+#   UInputComponent *inputHandle =
+#     FindComponentByClass<UInputComponent>();
+
+#     _inputComponent->
+#     BindAxis("Forward", this, &AHero::Move);
+#     _inputComponent->
+#     BindAxis("Backwards", this, &AHero::Move);
+# }
+# #+end_src

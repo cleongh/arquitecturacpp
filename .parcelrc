@@ -1,0 +1,7 @@
+{
+    "extends": "@parcel/config-default",
+    "transformers": {
+	"*.reveal.org": ["./org-transformer-reveal.mjs"],
+	"*.org": ["./org-transformer.mjs"]
+    }
+}

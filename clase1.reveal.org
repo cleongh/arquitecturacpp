@@ -490,7 +490,7 @@ También podemos arrancar el proyecto sin el editor
 
 
 #+caption: Para eso, arrancamos con la opción /Development/ (sin /Editor/)
-[[file:development_config.png]]
+[[file:imgs/development_config.png]]
 
 #+REVEAL: split
 

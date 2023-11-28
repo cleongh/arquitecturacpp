@@ -7,4 +7,4 @@ var e,t;e=this,t=function(){/*!
 	 *
 	 * Copyright (C) 2011-2014 Hakim El Hattab, http://hakim.se
 	 */return()=>e},"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):(e="undefined"!=typeof globalThis?globalThis:e||self).RevealZoom=t();
-//# sourceMappingURL=clase1.reveal.167eb7a6.js.map
+//# sourceMappingURL=clase2.reveal.85129afe.js.map

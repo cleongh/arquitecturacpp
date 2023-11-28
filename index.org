@@ -1,5 +1,6 @@
 #+title: Arquitectura UE en C++
 
-- [[file:./clase1.reveal.org][Clase 1]]
-- [[file:/clase2.reveal.org][Clase 2]]
-- [[file:clase3.reveal.org][Clase 3]]
+
+- [[./clase1.reveal.org][Clase 1]]  
+- [[./clase2.reveal.org][Clase 2]]
+- [[./clase3.reveal.org][Clase 3]]

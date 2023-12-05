@@ -472,6 +472,8 @@ private:
     FString _text2;
 #+end_src
 
+La versión con =meta= tiene prioridad sobre el comentario
+
 #+REVEAL: split
 
 Se pueden hacer categorías y subcategorías:

@@ -210,6 +210,8 @@ UPROPERTY(EditAnywhere)
 TObjectPtr<ACPPAdventurer> _adventurer;
 #+end_src
 
+(Veremos =UPROPERTY= en un momento)
+
 #+REVEAL: split
 
 - =TObjectPtr<T>= (o simplemente el punto con el =UPROPERTY=) toma posesión (quizá compartida) de un asset
@@ -217,7 +219,7 @@ TObjectPtr<ACPPAdventurer> _adventurer;
 - =TSoftObjectPtr<T>= es como un =weak=, pero tiene funcionalidad para la carga perezosa
 
 
-* Decorador
+** Probando carga con TObjectPtr
 
 Añadimos un =Actor C++= que tenga una propiedad de editor (=UPROPERTY=) para establecer su malla:
 
@@ -354,6 +356,38 @@ void ACPPAdventurer::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 }
 #+end_src
 
+#+REVEAL: split
+
+Y el método =Move= (que está en la clase como un método normal), usa el valor del eje para mover el =Actor=
+
+#+begin_src cpp
+void ACPPAdventurer::Move(const FInputActionValue& v) {	
+	FVector forward = GetWorld()->
+		GetFirstPlayerController()->
+		PlayerCameraManager->
+		GetCameraRotation().Vector();
+	AddMovementInput(forward, v.GetMagnitude());
+}
+#+end_src
+
+
+#+REVEAL: split
+
+Con esto ya podemos hacer los movimientos en 4 direcciones o, mejor aún, que el personaje rote cuando usamos /izquierda/ o /derecha/
+
+#+REVEAL: split
+
+Buscad cómo rotar en la ayuda de UE
+
+Para las rotaciones, en vez de =BindAxis()=, usaremos =BindAction()=
+
+Y moveremos la rotación del personaje
+
+#+REVEAL: split
+
+Los =FRotator= se pueden sumar con el operador =+= (está sobrecargado)
+
+
 
 * Propiedades para el editor
 
@@ -416,15 +450,39 @@ Por ejemplo, una propiedad de cadena de texto nueva, esta vez que *se pueda edit
 
 #+REVEAL: split
 
-Será algo parecido a esto:
+Será algo parecido a esto (atención a ~EditAnywhere~):
 
 #+begin_src cpp
 private:
-    // Atención a `EditAnywhere`
     UPROPERTY(EditAnywhere)
     FString _text;
 #+end_src
 
+#+REVEAL: split
+
+Para que aparezca un /tool tip/ cuando pasamos el cursor por una propiedad:
+
+#+begin_src cpp
+private:
+    // Un cometario encima es interpretado como documentación
+    UPROPERTY(EditAnywhere)
+    FString _text1;
+
+    UPROPERTY(EditAnywhere, meta=(ToolTip="Con argumentos también"))
+    FString _text2;
+#+end_src
+
+#+REVEAL: split
+
+Se pueden hacer categorías y subcategorías:
+
+#+begin_src cpp
+UPROPERTY(EditAnywhere, Category = "Estetica|Mallas")
+#+end_src
+
+#+REVEAL: split
+
+Podéis encontrar los muchos parámetros que se pueden poner en la documentación de las [[https://docs.unrealengine.com/latest/en-US/unreal-engine-uproperties/][propiedades]] y los [[https://docs.unrealengine.com/latest/en-US/metadata-specifiers-in-unreal-engine/][metadatos]]
 
 ** Relaciones entre entidades
 
@@ -444,7 +502,7 @@ Idealmente, estamos creando un componente genérico que permita trabajar con cua
 
 Pero /nuestro héroe se crea en tiempo de ejecución, no antes/
 
-* Recordatorio: Controller y Pawn
+* Accediendo a distintas entidades desde C++
 
 #+REVEAL: split
 
@@ -456,9 +514,19 @@ La idea es que, desde el punto de vista de la arquitectura, el controlador pueda
 
 #+REVEAL: split
 
+Hay varias alternativas para arquitecturas de componentes
+
+En las más puras, los componentes no hablan entre sí directamente, y no pueden interactuar
+
+(Por ejemplo, las arquitecturas de paso de mensajes)
+
+#+REVEAL: split
+
 Hasta ahora habíamos trabajado con acceso desde /abajo/ hasta /arriba/, de forma que, con =GetOwner()=, habíamos tenido acceso a la entidad contenedora
 
 Pero es muy útil poder acceder de arriba a abajo, es decir, desde la entidad superior, a la entidad que está incluida en ella
+
+
 
 ** =GetWorld=
 
@@ -513,6 +581,19 @@ Así, vamos a hacer que en el =TickComponent= apropiado (es decir, en cada frame
 - y, si tiene más puntos que un umbral dado (¡hacemos un =UPROPERTY=!), la celda se eleve
 
 
+
+** =FindComponentByClass=
+
+Aunque en Unreal se pueden hacer muchas alternativas, es bastante común que un componente de la entidad quiera acceder a otro componente de la misma entidad
+
+Para eso tenemos el método =FindComponentByClass=:
+
+#+begin_src cpp
+[UClaseDelComponente] componentHandle =
+    GetOwner()->FindComponentByClass<UClaseDelComponente>();
+#+end_src
+
+
 * Ojo con los =colliders=
 
 #+REVEAL: split
@@ -548,69 +629,7 @@ Ahora ya tenemos /un pequeño juego/
 Hay un desafío, y hay que seguir las reglas preestablecidas para solucionarlo
 
 
-* Acciones de entrada
 
-#+REVEAL: split
-
-Hay varias alternativas para arquitecturas de componentes
-
-En las más puras, los componentes no hablan entre sí directamente, y no pueden interactuar
-
-Por ejemplo, las arquitecturas de paso de mensajes
-
-#+REVEAL: split
-
-Aunque en Unreal se pueden hacer muchas alternativas, es bastante común que un componente de la entidad quiera acceder a otro componente de la misma entidad
-
-Para eso tenemos el método =FindComponentByClass=:
-
-#+begin_src cpp
-[UClaseDelComponente] componentHandle =
-    GetOwner()->FindComponentByClass<UClaseDelComponente>();
-#+end_src
-
-
-#+REVEAL: split
-
-Y el método =Move= (que está en la clase como un método normal), usa el valor del eje para mover el =Actor=
-
-#+begin_src cpp
-void ACPPAdventurer::Move(const FInputActionValue& v) {	
-	FVector forward = GetWorld()->
-		GetFirstPlayerController()->
-		PlayerCameraManager->
-		GetCameraRotation().Vector();
-	AddMovementInput(forward, v.GetMagnitude());
-}
-#+end_src
-
-#+REVEAL: split
-
-Hay que tener, obviamente, un =InputComponent= en el /blueprint/ de nuestro =Actor= para que todo funcione
-
-#+REVEAL: split
-
-Tendremos que haber *incluido la cabecera* del =InputComponent=:
-
-#+begin_src cpp
-#include "Components/InputComponent.h"
-#+end_src
-
-#+REVEAL: split
-
-Con esto ya podemos hacer los movimientos en 4 direcciones o, mejor aún, que el personaje rote cuando usamos /izquierda/ o /derecha/
-
-#+REVEAL: split
-
-Buscad cómo rotar en la ayuda de UE
-
-Para las rotaciones, en vez de =BindAxis()=, usaremos =BindAction()=
-
-Y moveremos la rotación del personaje
-
-#+REVEAL: split
-
-Los =FRotator= se pueden sumar con el operador =+= (está sobrecargado)
 
 * TArray
 

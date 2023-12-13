@@ -364,12 +364,28 @@ if (nullptr != f) // comprobad siempre
 
 ** =BlueprintImplementableEvent=
 
+Podemos declarar una función en C++, y la implementamos en una clase hija en /blueprint/:
+
 #+begin_src cpp
 UFUNCTION(BlueprintImplementableEvent)
-void EventoBP();
+void EventoBP(); // sin implementación!
 #+end_src
 
+Y puedo llamar a ~EventoBP~ desde cualquier parte de C++
+
+#+REVEAL: split
+
+#+caption: Desde la clase BP que hereda de la clase C++ que tiene ~EventoBP~, sobreescribimos el método
+#+attr_html: :height 500
+[[file:imgs/implementable_event_bp.png]]
+
+#+REVEAL: split
+
+Sin parámetros ni salida (~void~) aparecerá como un evento (si no, como una función)
+
 ** =BlueprintNativeEvent=
+
+Es lo mismo que =BlueprintImplementableEvent=, pero nos permite dar una implementación nativa por defecto:
 
 #+begin_src cpp
 UFUNCTION(BlueprintNativeEvent)
@@ -379,9 +395,15 @@ void EventoBP();
 
 void AMiActor::EventoBP_Implementation()
 {
-  // ...
+  // Implementación por defecto
 }
 #+end_src
+
+#+REVEAL: split
+
+#+caption: Podemos llamar a la implementación del padre (en C++) también
+#+attr_html: :height 500
+[[file:imgs/recibir_evento_native_bp.png]]
 
 * Cosas que los /blueprints/ no pueden hacer
 

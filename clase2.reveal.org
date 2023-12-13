@@ -379,7 +379,7 @@ Con esto ya podemos hacer los movimientos en 4 direcciones o, mejor aún, que el
 
 Buscad cómo rotar en la ayuda de UE
 
-Para las rotaciones, en vez de =BindAxis()=, usaremos =BindAction()=
+Haremos otro =BindAction()= para la rotación
 
 Y moveremos la rotación del personaje
 

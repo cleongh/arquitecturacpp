@@ -342,6 +342,11 @@ Ahora vamos a compilar nuestro proyecto:
 - Después damos a =Play= en UE
 - Deberíamos ver "¡Preparado y listo!" en el log
 
+#+REVEAL: split
+
+También tenemos un "atajo" para ~UE_LOG~: ~[[https://unrealcommunity.wiki/logging-lgpidy6i#logging-using-ue_logfmt][UE_LOGFMT]]~
+
+
 * Usando UE como código
 
 Aunque veamos UE como un entorno integrado, cuando lo ejecutamos realmente estamos arrancando el *motor de UE* completo

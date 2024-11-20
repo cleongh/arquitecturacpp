@@ -46,7 +46,7 @@ Cuando solape con ese actor, lanzará un evento
 
 #+REVEAL: split
 
-Ahora, /en el componente/, añadimos (por encima de =UCLASS(ClassGroup=...))=) el siguiente código:
+Ahora, /en el componente/, añadimos (por encima de =UCLASS(ClassGroup...))=  el siguiente código:
 
 #+begin_src cpp
 DECLARE_DYNAMIC_MULTICAST_DELEGATE()
@@ -239,14 +239,14 @@ Con este método podemos acceder a una función en /blueprints/
 
 #+REVEAL: split
 
-Vamos a crear un componente /blueprint/ en el editor (es decir, *que no sea C++*)
+Vamos a crear un componente /blueprint/ en el editor (*que no sea C++*)
 
 En él, creamos una función que imprima un texto por pantalla
 
 #+REVEAL: split
 
 #+caption: Función con un parámetro =Text= que imprime la entrada
-#+attr_html: :height 450
+#+attr_html: :height 350
 [[file:imgs/funcion_bp_llamable.png]]
 
 #+REVEAL: split
@@ -266,8 +266,9 @@ if (nullptr != f)
     f->CallFunctionByNameWithArguments(
         TEXT("Saludar \"hola a todos\""),
         n,  // dispositivo de salida
-        nullptr, // ejecutor (null vale)
-        true); // forzar llamada (T vale)
+        nullptr, // objeto sobre el que se ejecuta (null vale)
+        true); // llamar incluso si la función
+               // no es "Exec "(T vale)
 }
 #+end_src
 
@@ -304,7 +305,7 @@ Asegurémonos de que todo compila correctamente
 Ahora volvemos a nuestra clase /blueprint/ original, y cambiamos el padre:
 
 #+caption: Cambiar el padre de una clase
-#+attr_html: :height 350
+#+attr_html: :height 250
 [[file:imgs/reparent_class.png]]
 
 
@@ -376,7 +377,7 @@ Y puedo llamar a ~EventoBP~ desde cualquier parte de C++
 #+REVEAL: split
 
 #+caption: Desde la clase BP que hereda de la clase C++ que tiene ~EventoBP~, sobreescribimos el método
-#+attr_html: :height 500
+#+attr_html: :height 400
 [[file:imgs/implementable_event_bp.png]]
 
 #+REVEAL: split
@@ -402,7 +403,7 @@ void AMiActor::EventoBP_Implementation()
 #+REVEAL: split
 
 #+caption: Podemos llamar a la implementación del padre (en C++) también
-#+attr_html: :height 500
+#+attr_html: :height 300
 [[file:imgs/recibir_evento_native_bp.png]]
 
 * Cosas que los /blueprints/ no pueden hacer

@@ -477,7 +477,7 @@ Cada vez que queramos compilar, usamos *Ctrl-Alt-F11*
 ** Visual Studio y modificaciones
 
 
-#+caption: /Live coding/ funciona con casi todos los cambios de código (.cpp/.h), pero si cambiamos la estructura de clases, deberemos reiniciar el editor de UE
+#+caption: /Live coding/ funciona con casi todos los cambios de código, pero si cambiamos la estructura de clases, deberemos reiniciar el editor de UE
 #+attr_html: :width 600 
 [[file:imgs/recargar_live_coding.png]]
 
@@ -716,7 +716,7 @@ Después, arrastramos el nuevo actor desde el /Content Browser/ hasta la escena
 
 #+REVEAL: split
 
-Una vez creada la clase, vamos a crear un componente dentro de ella
+Una vez creada la clase, vamos a instanciar un componente dentro de ella
 
 #+REVEAL: split
 
@@ -815,7 +815,7 @@ static ConstructorHelpers::FObjectFinder<UStaticMesh>
 
 #+REVEAL: split
 
-=static= aquí hace que solo haya una instancia del assets compartida por todos las =Actor=s, así /solo se carga la primera vez/
+=static= aquí hace que solo haya una instancia del assets compartida por todos los =Actor=, así /solo se carga la primera vez/
 
 Si no se comparte asset, igual no hace falta el =static=
 

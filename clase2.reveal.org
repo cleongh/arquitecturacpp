@@ -215,7 +215,7 @@ TObjectPtr<ACPPAdventurer> _adventurer;
 #+REVEAL: split
 
 - =TObjectPtr<T>= (o simplemente el punto con el =UPROPERTY=) toma posesión (quizá compartida) de un asset
-- =TWeakObjectPtr<T>= es un puntero débil sin posesión, pero tiene el coste de comprobar que el objeto no ha sido limpida (=TObjectPtr= /nullifica/ las referencias, es más eficiente)
+- =TWeakObjectPtr<T>= es un puntero débil sin posesión, pero tiene el coste de comprobar que el objeto no ha sido limpiado (=TObjectPtr= /nullifica/ las referencias, es más eficiente)
 - =TSoftObjectPtr<T>= es como un =weak=, pero tiene funcionalidad para la carga perezosa
 
 

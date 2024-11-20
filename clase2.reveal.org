@@ -284,11 +284,15 @@ UE4 usa un motor de entrada más sencillo que UE $\geq 5$
 
 ** Enhanced Input
 
-Para que UE reconozca el subsistema de entrada nuevo, hay que añadir la cadena ~"EnhancedInput"~ al archivo =[NOMBRE_PROYECTO].Build.cs=, que estará en el mismo sitio que los =.cpp=:
+Para que UE reconozca el subsistema de entrada nuevo, hay que asegurarse de que la cadena ~"EnhancedInput"~ está en el archivo =[NOMBRE_PROYECTO].Build.cs=, que estará en el mismo sitio que los =.cpp=:
 
 #+begin_src csharp
 PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
 #+end_src
+
+#+REVEAL: split
+
+En versiones recientes, esto ya estará añadido al crear el proyecto.
 
 #+REVEAL: split
 

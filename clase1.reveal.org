@@ -77,7 +77,7 @@ Al instalarla, aseguraos de que se instala:
 
 En macOS, [[https://developer.apple.com/xcode/][Xcode]] es una alternativa válida a Visual Studio
 
-También se puede usar CLion y VSCode, y cualquier otro editor más simple que pueda compilar y depurar
+También se pueden usar Rider y VSCode, y cualquier otro editor más simple que pueda compilar y depurar
 
 #+BEGIN_NOTES
 - Explica que UE usa compilación "normal"
@@ -407,7 +407,7 @@ Yo suelo arrancar con /juego + editor en desarrollo/, con eso tengo los símbolo
 
 #+REVEAL: split
 
-Para otros IDEs (Clion, VSCode, Xcode), el proceso es similar
+Para otros IDEs (Rider, VSCode, Xcode), el proceso es similar
 
 Lo único que tenéis que tener en cuenta es saber compilar y lanzar en la configuración apropiada
 

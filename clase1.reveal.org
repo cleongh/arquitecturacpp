@@ -344,7 +344,7 @@ Ahora vamos a compilar nuestro proyecto:
 
 #+REVEAL: split
 
-También tenemos un "atajo" para ~UE_LOG~, más cómodo y flexible: [[https://unrealcommunity.wiki/logging-lgpidy6i#logging-using-ue_logfmt][UE_LOGFMT]]
+También tenemos un "atajo" para ~UE_LOG~, más cómodo y flexible: [[https://unrealcommunity.wiki/logging-lgpidy6i#logging-using-ue_logfmt][~UE_LOGFMT~]]
 
 
 * Usando UE como código

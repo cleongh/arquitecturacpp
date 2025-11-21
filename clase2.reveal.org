@@ -229,6 +229,7 @@ Añadimos un =Actor C++= que tenga una propiedad de editor (=UPROPERTY=) para es
 En el =.h=:
 
 #+begin_src cpp
+// Esto no *carga* el asset, solo es una referencia perezosa
 UPROPERTY(EditAnywhere, Category = "Estetica")
 TSoftObjectPtr<UStaticMesh> _malla_externa;
 
@@ -571,7 +572,7 @@ Pero podemos hacer /casting/
 #+REVEAL: split
 
 #+begin_src cpp
-auto *pawn = GetWorld()->
+APawn *pawn = GetWorld()->
     GetFirstPlayerController()->
     GetPawn();
 
@@ -615,8 +616,6 @@ Las físicas en Unreal son muy complejas (¡y potentes!), nosotros vamos a centr
 #+REVEAL: split
 
 Es muy posible (por ejemplo, la fruta) que no tenga ninguna información sobre colisión, así que tendremos que crearla
-
-(Aunque si lo habéis hecho paso a paso, debería tener una malla de colisión por defecto)
 
 #+REVEAL: split
 

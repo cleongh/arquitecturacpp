@@ -1,3 +1,4 @@
+# -*- ispell-local-dictionary: "es"; encoding: utf-8; eval: (add-hook 'after-save-hook #'org-html-export-to-html nil t); compile-command: "npx vite" -*-
 #+title: Arquitectura UE en C++
 
 

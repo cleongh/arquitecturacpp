@@ -1,21 +1,85 @@
-# -*- encoding:utf-8; -*-
-
-#+title: Arquitectura de juegos en Unreal Engine con C++
+# -*- ispell-local-dictionary: "es"; encoding: utf-8; eval: (add-hook 'after-save-hook #'org-re-reveal-export-to-html nil t); compile-command: "npx vite" -*-
+#+TITLE: Arquitectura de juegos en Unreal Engine con C++
 #+AUTHOR: Carlos León
-#+EMAIL: cleon@ucm.es
-#+department: Department of Software Engineering and Artificial Intelligence
-#+institution: Computer Science Faculty, Universidad Complutense de Madrid
-#+address: Calle Profesor José García Santesmases, 9, 28040 Madrid, Spain
+
 #+LANGUAGE: es
-#+OPTIONS: toc:nil reveal_history:t timestamp:nil date:nil author:t email:t num:nil reveal_single_file:nil inline:nil
-#+REVEAL_INIT_OPTIONS: slideNumber:true
-#+reveal_mousewheel:t
-#+REVEAL_TRANS: none
-#+REVEAL_EXTRA_CSS: base.css
-#+REVEAL_PLUGINS: (search highlight zoom)
-#+addbibresource: ~/articulos/bibliografia.bib
-#+BIBLIOGRAPHY: ~/articulos/bibliografia.bib
-#+language: es
+#+OPTIONS:  toc:0 num:t timestamp:nil
+#+REVEAL_ROOT: https://cdn.jsdelivr.net/npm/reveal.js
+#+REVEAL_THEME: black
+#+REVEAL_TRANS: slide
+#+REVEAL_SPEED: fast
+#+REVEAL_HLEVEL: 1
+#+REVEAL_MARGIN: 0.02
+#+REVEAL_MIN_SCALE: 0.2
+#+REVEAL_GENERATE_IDS: t
+#+REVEAL_MAX_SCALE: 1.2
+#+REVEAL_PLUGINS: (notes highlight search zoom)
+#+REVEAL_TITLE_SLIDE: <h1>%t</h1><h3>%s</h3><h4>%a</h4>
+
+#+BEGIN_EXPORT html
+<style>
+
+
+.reveal .figure-number {
+    display: none;
+}
+
+section h1 .section-number-1,
+section h2 .section-number-2,
+section h3 .section-number-3,
+section h4 .section-number-4,
+section h5 .section-number-5,
+section h6 .section-number-6 {
+    display: none;
+}
+
+
+.reveal  p , .reveal  ul, .reveal .figure {
+    font-size: 80%;
+}
+
+
+.reveal h1, .reveal h2, .reveal h3, .reveal h4, .reveal h5, .reveal h6 {
+    text-transform: none !important;
+}
+
+.reveal h1 {
+font-size: 160%;
+}
+.reveal h2{
+font-size: 150%;
+}
+.reveal h3{
+font-size: 100%;
+}
+.reveal h4{
+font-size: 90%;
+}
+
+.reveal strong,
+.reveal b {
+    color: orange;
+}
+
+.reveal .slides section:not(.title-slide) h1,
+.reveal .slides section:not(.title-slide) h2,
+.reveal .slides section:not(.title-slide) h3,
+.reveal .slides section:not(.title-slide) h4,
+.reveal .slides section:not(.title-slide) h5 {
+    font-size: 0.7em !important;
+    color: #999 !important;
+    text-align: left !important;
+}
+</style>
+#+end_export
+
+
+# * Índice
+# :PROPERTIES:
+# :UNNUMBERED: notoc
+# :END:
+
+# #+REVEAL_TOC: headlines 1
 
 # https://docs.unrealengine.com/5.0/en-US/unreal-engine-5-migration-guide/
 

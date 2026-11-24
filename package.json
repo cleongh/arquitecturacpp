@@ -7,8 +7,8 @@
         "url": "git+https://gitlab.com/cleongl/web.git"
     },
     "scripts": {
-        "start": "npx parcel index.org --open",
-        "build": "npx parcel build index.org --public-url ./ --dist-dir docs"
+        "start": "npm i && npx parcel index.org --open",
+        "build": "npm i && npx parcel build index.org --public-url ./ --dist-dir docs"
     },
     "keywords": [
         "web",
@@ -16,17 +16,17 @@
     ],
     "author": "cleon",
     "license": "ISC",
-    "bugs": {
-        "url": "https://gitlab.com/cleongl/web/issues"
-    },
-    "homepage": "https://gitlab.com/cleongl/web#readme",
+    // "bugs": {
+    //     "url": "https://gitlab.com/cleongl/web/issues"
+    // },
+    // "homepage": "https://gitlab.com/cleongl/web#readme",
     "devDependencies": {
-        "@parcel/optimizer-data-url": "^2.10.3",
-        "@parcel/transformer-inline-string": "^2.10.3",
-        "parcel": "^2.9.3",
-        "reveal.js": "^5.0.2"
+        "@parcel/optimizer-data-url": "^2.16.4",
+        "@parcel/transformer-inline-string": "^2.16.4",
+        "parcel": "^2.16.4",
+        "reveal.js": "^6.0.2"
     },
     "dependencies": {
-        "@parcel/rust-linux-x64-gnu": "^2.16.1"
+        "@parcel/rust-linux-x64-gnu": "^2.16.4"
     }
 }

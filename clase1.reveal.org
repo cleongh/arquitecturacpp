@@ -694,11 +694,11 @@ Mirad, desde VS, qué tipo devuelve cada método para saber cómo usarlo
 
 #+REVEAL: split
 
-Cuando sepáis un tipo/clase que no sepáis usar, [[https://docs.unrealengine.com/latest/en-US/API/Runtime/Core/Math/FTransform/][buscad en Google]]:
+# Cuando sepáis un tipo/clase que no sepáis usar, [[https://docs.unrealengine.com/latest/en-US/API/Runtime/Core/Math/FTransform/][buscad en Google]]:
 
-#+begin_example
-ftransform unreal
-#+end_example
+# #+begin_example
+# ftransform unreal
+# #+end_example
 
 Recordad también que, una vez que obtengáis la posición, tendréis que convertirla a cadena
 

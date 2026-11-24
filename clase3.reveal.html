@@ -131,7 +131,7 @@ Ahora, <i>en el componente</i>, añadimos (por encima de <code>UCLASS(ClassGroup
 <section>
 
 <p>
-Un <a href="https://docs.unrealengine.com/latest/en-US/delegates-and-lamba-functions-in-unreal-engine/"><i>delegate</i></a> es una estructura que encapsula una llamada a función
+Un <a href="https://dev.epicgames.com/documentation/unreal-engine/delegates-and-lambda-functions-in-unreal-engine?application_version=5.6"><i>delegate</i></a> es una estructura que encapsula una llamada a función
 </p>
 
 <p>
@@ -262,7 +262,7 @@ Ahora vamos al Blueprint del actor que contiene el componente y en los eventos a
 </p>
 
 
-<div id="org0ed9f51" class="figure">
+<div id="orga39b1c8" class="figure">
 <p><img src="imgs/evento_aparece_en_bp.png" alt="evento_aparece_en_bp.png" height="450" />
 </p>
 <p><span class="figure-number">Figura 1: </span>Aparecerá un botón nuevo en los eventos, pinchando en el componente</p>
@@ -273,7 +273,7 @@ Ahora vamos al Blueprint del actor que contiene el componente y en los eventos a
 <section>
 
 
-<div id="orgc49ba72" class="figure">
+<div id="orgdbc8ff2" class="figure">
 <p><img src="imgs/usar_delegate_bp.png" alt="usar_delegate_bp.png" height="500" />
 </p>
 <p><span class="figure-number">Figura 2: </span>Y este evento lo podemos usar en el <i>blueprint</i> como queramos</p>
@@ -393,7 +393,7 @@ Para alimentar la función, podemos construir el siguiente esquema en el <i>blue
 </p>
 
 
-<div id="orgee1cef6" class="figure">
+<div id="orgab77bb2" class="figure">
 <p><img src="imgs/bp_llama_cpp.png" alt="bp_llama_cpp.png" height="450" />
 </p>
 <p><span class="figure-number">Figura 3: </span>Blueprint para establecer variable</p>
@@ -421,7 +421,7 @@ float CalculoSinEfectos() const;
 <section>
 
 <p>
-<a href="https://docs.unrealengine.com/latest/en-US/API/Runtime/CoreUObject/UObject/UObject/CallFunctionByNameWithArguments/"><code>UObject</code></a> tiene el método <code>CallFunctionByNameWithArguments</code>
+<a href="https://dev.epicgames.com/documentation/unreal-engine/objects-in-unreal-engine?application_version=5.8"><code>UObject</code></a> tiene el método <code>CallFunctionByNameWithArguments</code>
 </p>
 
 <p>
@@ -443,7 +443,7 @@ En él, creamos una función que imprima un texto por pantalla
 <section>
 
 
-<div id="orgcd22940" class="figure">
+<div id="orgd3fa3fc" class="figure">
 <p><img src="imgs/funcion_bp_llamable.png" alt="funcion_bp_llamable.png" height="350" />
 </p>
 <p><span class="figure-number">Figura 4: </span>Función con un parámetro <code>Text</code> que imprime la entrada</p>
@@ -533,7 +533,7 @@ Ahora volvemos a nuestra clase <i>blueprint</i> original, y cambiamos el padre:
 </p>
 
 
-<div id="org26c6ee7" class="figure">
+<div id="orgb3b2e77" class="figure">
 <p><img src="imgs/reparent_class.png" alt="reparent_class.png" height="250" />
 </p>
 <p><span class="figure-number">Figura 5: </span>Cambiar el padre de una clase</p>
@@ -593,7 +593,7 @@ if (nullptr != f) // comprobad siempre
 <section>
 
 
-<div id="orgb09c912" class="figure">
+<div id="org0d6795b" class="figure">
 <p><img src="imgs/salida_bp_desde_cpp.png" alt="salida_bp_desde_cpp.png" height="400" />
 </p>
 <p><span class="figure-number">Figura 6: </span>Ejemplo de salida llamado a una función <i>blueprint</i> desde C++</p>
@@ -627,7 +627,7 @@ Y puedo llamar a <code>EventoBP</code> desde cualquier parte de C++
 <section>
 
 
-<div id="orgcfaad4c" class="figure">
+<div id="orgc1e0b0a" class="figure">
 <p><img src="imgs/implementable_event_bp.png" alt="implementable_event_bp.png" height="400" />
 </p>
 <p><span class="figure-number">Figura 7: </span>Desde la clase BP que hereda de la clase C++ que tiene <code>EventoBP</code>, sobreescribimos el método</p>
@@ -664,7 +664,7 @@ void AMiActor::EventoBP_Implementation()
 <section>
 
 
-<div id="org33f9035" class="figure">
+<div id="orgd015c97" class="figure">
 <p><img src="imgs/recibir_evento_native_bp.png" alt="recibir_evento_native_bp.png" height="300" />
 </p>
 <p><span class="figure-number">Figura 8: </span>Podemos llamar a la implementación del padre (en C++) también</p>

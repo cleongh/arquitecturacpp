@@ -706,7 +706,7 @@ Hay un desafío, y hay que seguir las reglas preestablecidas para solucionarlo
 
 #+REVEAL: split
 
-Como ya vimos, Unreal usa su propia estructura de /array/: [[https://docs.unrealengine.com/latest/en-US/API/Runtime/Core/Containers/TArray/][=TArray=]]
+Como ya vimos, Unreal usa su propia estructura de /array/: [[https://dev.epicgames.com/documentation/unreal-engine/array-containers-in-unreal-engine?lang=es-ES][=TArray=]]
 
 Es una estructura con genéricos (igual que [[http://www.cplusplus.com/reference/vector/vector/][=vector=]] en STL)
 

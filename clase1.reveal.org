@@ -526,7 +526,7 @@ Una manera de trabajar alternativa a abrir UE a través del Epic Games Launcher 
 
 Hasta UE5, el proceso de programa en UE con C++ sin reiniciar el juego/editor con cada cambio se hacía con una tecnología llamada /hot reload/
 
-Ahora (y en las últimas versiones de UE4) usamos /live coding/, está habilitado por defecto
+Ahora usamos /live coding/, está habilitado por defecto
 
 #+REVEAL: split
 

@@ -1,7 +1,5 @@
 /node_modules/
 /.parcel-cache/
 /dist/
-/clase3.reveal.html
-/clase1.reveal.html
-/clase2.reveal.html
+/docs/
 /index.html

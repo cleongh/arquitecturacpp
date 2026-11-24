@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<title>Trabajar con blueprints visuales y C++</title>
+<meta name="author" content="Carlos León"/>
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.css"/>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/theme/black.css" id="theme"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/plugin/highlight/zenburn.css"/>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section id="sec-title-slide">
+<h1>Trabajar con blueprints visuales y C++</h1><h3></h3><h4>Carlos León</h4>
+</section>
+<style>
+
+
+.reveal .figure-number {
+    display: none;
+}
+
+section h1 .section-number-1,
+section h2 .section-number-2,
+section h3 .section-number-3,
+section h4 .section-number-4,
+section h5 .section-number-5,
+section h6 .section-number-6 {
+    display: none;
+}
+
+
+.reveal  p , .reveal  ul, .reveal .figure {
+    font-size: 80%;
+}
+
+
+.reveal h1, .reveal h2, .reveal h3, .reveal h4, .reveal h5, .reveal h6 {
+    text-transform: none !important;
+}
+
+.reveal h1 {
+font-size: 160%;
+}
+.reveal h2{
+font-size: 150%;
+}
+.reveal h3{
+font-size: 100%;
+}
+.reveal h4{
+font-size: 90%;
+}
+
+.reveal strong,
+.reveal b {
+    color: orange;
+}
+
+.reveal .slides section:not(.title-slide) h1,
+.reveal .slides section:not(.title-slide) h2,
+.reveal .slides section:not(.title-slide) h3,
+.reveal .slides section:not(.title-slide) h4,
+.reveal .slides section:not(.title-slide) h5 {
+    font-size: 0.7em !important;
+    color: #999 !important;
+    text-align: left !important;
+}
+</style>
+<section>
+<section id="slide-1">
+<h2 id="1"><span class="section-number-2">1.</span> ¿BP o C++?</h2>
+<div class="outline-text-2" id="text-1">
+</div>
+</section>
+<section id="slide-1-1">
+<h3 id="1-1"><span class="section-number-3">1.1.</span> ¿Por qué usar Blueprint visuales?</h3>
+</section>
+<section>
+
+<p>
+En C++ es más sencillo (y en ocasiones más eficiente) hacer ciertos comportamientos (como cálculos matemáticos complejos)
+</p>
+
+</section>
+<section>
+
+<p>
+Sin embargo, hay algunos comportamientos que se programan muy fácilmente de modo gráfico
+</p>
+</section>
+<section id="slide-1-2">
+<h3 id="1-2"><span class="section-number-3">1.2.</span> Componentes como bloques Blueprint visuales</h3>
+</section>
+<section>
+
+<p>
+Vamos a crear un actor+componente que sea un trigger y se active justo delante de la celda, sólo si tenemos los puntos suficientes
+</p>
+
+<p>
+El <code>Actor</code> puede ser en Blueprints o en C++
+</p>
+
+</section>
+<section>
+
+<p>
+Cuando solape con ese actor, lanzará un evento
+</p>
+
+</section>
+<section>
+
+<p>
+Ahora, <i>en el componente</i>, añadimos (por encima de <code>UCLASS(ClassGroup...))</code>  el siguiente código:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >DECLARE_DYNAMIC_MULTICAST_DELEGATE()
+</code></pre>
+</div>
+
+</section>
+<section>
+
+<p>
+Un <a href="https://docs.unrealengine.com/latest/en-US/delegates-and-lamba-functions-in-unreal-engine/"><i>delegate</i></a> es una estructura que encapsula una llamada a función
+</p>
+
+<p>
+Se usan para conectar <i>blueprints</i> con C++
+</p>
+
+</section>
+<section>
+
+<p>
+<code>DECLARE_DYNAMIC_MULTICAST_DELEGATE</code> es necesario si queremos que haya una propiedad del componente que podamos asignar en un Blueprint
+</p>
+
+<ul>
+<li><code>DYNAMIC</code>: puede ser serializado</li>
+<li><code>MULTICAST</code>: de uno a muchos</li>
+<li><code>DELEGATE</code>: algo externo va a manejar la operación</li>
+
+</ul>
+
+</section>
+<section>
+
+<p>
+Ahora creamos el código:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >// hay muchas macros en las que ';' es opcional
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAntesTerminar); 
+</code></pre>
+</div>
+
+<p>
+(Recordemos que <code>F</code> al principio de la clase se usa por convenio en Unreal)
+</p>
+
+<p>
+Esto crea una clase propia para la señal en el editor de Blueprints
+</p>
+
+</section>
+<section>
+
+<p>
+Después, en los atributos privados, creemos un <code>UPROPERTY</code> con el param de esa clase que hemos referenciado en <code>DECLARE_DYNAMIC_MULTICAST_DELEGATE</code>
+</p>
+
+</section>
+<section>
+
+<p>
+Esta propiedad tiene que ser <code>BlueprintAssignable</code>: <a href="https://docs.unrealengine.com/latest/en-US/exposing-gameplay-elements-to-blueprints-visual-scripting-in-unreal-engine/"><code>UPROPERTY(BlueprintAssignable)</code></a> para que se vea en el editor:
+</p>
+<div class="org-src-container">
+
+<pre><code class="cpp" >UPROPERTY(BlueprintAssignable)
+FAntesTerminar AntesTerminar;
+</code></pre>
+</div>
+
+</section>
+<section>
+
+<p>
+Bien, ahora hemos creado un <i>evento</i>
+</p>
+
+</section>
+<section>
+
+<p>
+Para ello, cuando detectemos solape con la gema, vamos a hacer <code>Broadcast</code> sobre el evento:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >AntesTerminar.Broadcast();
+</code></pre>
+</div>
+
+</section>
+<section>
+
+<p>
+Si hemos hecho el actor en C++ tenemos que añadir el componente al actor de nuestro trigger con <code>CreateDefaultSubobject</code>
+</p>
+
+<p>
+Si está en Blueprint, directamente en el editor
+</p>
+
+<p>
+Añadimos también, en el <code>Actor</code>, un <code>Box</code> de colisión para establecer el volumen
+</p>
+
+
+</section>
+<section>
+
+<p>
+Si el <code>Actor</code> está en C++, el componente tendrá que ser <code>BlueprintReadWrite</code> porque queremos acceder a él desde el editor de <i>blueprints</i>:
+</p>
+
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >public:
+  UPROPERTY(EditAnywhere, BlueprintReadWrite)
+  UComponenteAntesTerminar * _antesTerminar;
+</code></pre>
+</div>
+
+<aside class="notes">
+<p>
+Tenía puesto que tenía que ser &laquo;public&raquo; en la clase, pero no lo tengo muy claro
+</p>
+
+</aside>
+
+
+</section>
+<section>
+
+<p>
+Ahora vamos al Blueprint del actor que contiene el componente y en los eventos añadimos el nuevo evento que ha aparecido:
+</p>
+
+
+<div id="org0ed9f51" class="figure">
+<p><img src="imgs/evento_aparece_en_bp.png" alt="evento_aparece_en_bp.png" height="450" />
+</p>
+<p><span class="figure-number">Figura 1: </span>Aparecerá un botón nuevo en los eventos, pinchando en el componente</p>
+</div>
+
+
+</section>
+<section>
+
+
+<div id="orgc49ba72" class="figure">
+<p><img src="imgs/usar_delegate_bp.png" alt="usar_delegate_bp.png" height="500" />
+</p>
+<p><span class="figure-number">Figura 2: </span>Y este evento lo podemos usar en el <i>blueprint</i> como queramos</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-2">
+<h2 id="2"><span class="section-number-2">2.</span> Funciones desde C++</h2>
+</section>
+<section>
+
+<p>
+Hasta ahora nos hemos centrado en usar C++ como una alternativa a <i>blueprints</i>, pero realmente se complementan muy bien
+</p>
+
+</section>
+<section>
+
+<p>
+Vamos a ver cómo llamar a funciones C++ desde <i>blueprints</i>, y a funciones <i>blueprint</i> desde C++
+</p>
+</section>
+</section>
+<section>
+<section id="slide-3">
+<h2 id="3"><span class="section-number-2">3.</span> Llamar a funciones desde el editor</h2>
+</section>
+<section>
+
+<p>
+En el <code>.h</code> de un <code>Actor</code> nuevo, añadimos el prototipo de una función sencilla:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >UFUNCTION(BlueprintCallable)
+void SaySomething(const FText &amp; text);
+</code></pre>
+</div>
+
+</section>
+<section>
+
+<p>
+Que implementamos así:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >void AActorFuncionLlamable::SaySomething(const FText &amp;text)
+{
+    FString str = text.ToString();
+    UE_LOG(LogTemp, Warning, TEXT("%s"), *str)
+}
+</code></pre>
+</div>
+
+<aside class="notes">
+<p>
+Puedes recordarles que <code>FText</code> es lo suyo para cadenas localizadas
+</p>
+
+</aside>
+
+</section>
+<section>
+
+<p>
+Las <code>UFUNCTION</code> usan los parámetros como entrada, a no ser que sean como referencia no constante, caso en el cual los usan como salida:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >UFUNCTION(BlueprintCallable)
+int32 fun(int32 &amp; output);
+</code></pre>
+</div>
+
+</section>
+<section>
+
+<p>
+Para hacer que esos parámetros no sean de salida, usamos la macro <code>UPARAM</code>, con el argumento <code>ref</code>
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >UFUNCTION(BlueprintCallable)
+int32 fun(
+    UPARAM(ref) int32 &amp; output
+    );
+</code></pre>
+</div>
+
+</section>
+<section>
+
+<p>
+También podemos cambiar la etiqueta de la variable:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >UFUNCTION(BlueprintCallable)
+int32 fun(
+    UPARAM(DisplayName="Total weight") int32 &amp; output
+    );
+</code></pre>
+</div>
+
+</section>
+<section>
+
+<p>
+Para alimentar la función, podemos construir el siguiente esquema en el <i>blueprint</i> del nivel:
+</p>
+
+
+<div id="orgee1cef6" class="figure">
+<p><img src="imgs/bp_llama_cpp.png" alt="bp_llama_cpp.png" height="450" />
+</p>
+<p><span class="figure-number">Figura 3: </span>Blueprint para establecer variable</p>
+</div>
+
+</section>
+<section>
+
+<p>
+Podemos establecer diferentes tipos de <code>UFUNCTION</code>, de forma que si queremos una función constante/pura (sin &laquo;pestañas&raquo; de orden de ejecución en los <i>blueprints</i>, porque no tiene <i>side-effects</i>):
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >UFUNCTION(BlueprintCallable)
+float CalculoSinEfectos() const;
+</code></pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-4">
+<h2 id="4"><span class="section-number-2">4.</span> Llamar a funciones <i>blueprint</i> desde C++</h2>
+</section>
+<section>
+
+<p>
+<a href="https://docs.unrealengine.com/latest/en-US/API/Runtime/CoreUObject/UObject/UObject/CallFunctionByNameWithArguments/"><code>UObject</code></a> tiene el método <code>CallFunctionByNameWithArguments</code>
+</p>
+
+<p>
+Con este método podemos acceder a una función en <i>blueprints</i>
+</p>
+
+</section>
+<section>
+
+<p>
+Vamos a crear un componente <i>blueprint</i> en el editor (<b>que no sea C++</b>)
+</p>
+
+<p>
+En él, creamos una función que imprima un texto por pantalla
+</p>
+
+</section>
+<section>
+
+
+<div id="orgcd22940" class="figure">
+<p><img src="imgs/funcion_bp_llamable.png" alt="funcion_bp_llamable.png" height="350" />
+</p>
+<p><span class="figure-number">Figura 4: </span>Función con un parámetro <code>Text</code> que imprime la entrada</p>
+</div>
+
+</section>
+<section>
+
+<p>
+Ahora creamos un <code>Actor</code> en C++, y en algún sitio (<code>Tick</code>, <code>BeginPlay</code>):
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >#include "Misc/OutputDeviceNull.h"
+
+// UImprimidorPadreCPP no existe aún
+auto f = FindComponentByClass&lt;UImprimidorPadreCPP&gt;();
+if (nullptr != f)
+{
+    // puede ser este null ahora
+    FOutputDeviceNull n;
+
+    f-&gt;CallFunctionByNameWithArguments(
+        TEXT("Saludar \"hola a todos\""),
+        n,  // dispositivo de salida
+        nullptr, // objeto sobre el que se ejecuta (null vale)
+        true); // llamar incluso si la función
+               // no es "Exec "(T vale)
+}
+</code></pre>
+</div>
+
+</section>
+<section>
+
+<p>
+En efecto, <i>no compila</i>
+</p>
+
+</section>
+<section>
+
+<p>
+Lo que ocurre es que necesitamos que la clase a la que estamos haciendo referencia <i>exista en C++</i>
+</p>
+
+</section>
+<section>
+
+<p>
+Vamos a crear una nueva clase en C++ que sea <i>padre</i> de la clase que queremos, para así poder importarla (<code>#include</code>)
+</p>
+
+</section>
+<section>
+
+<p>
+Creamos una clase <code>Actor</code> de C++
+</p>
+
+<p>
+Nos aseguramos de que su <code>UCLASS</code> sea <code>Blueprintable</code>
+</p>
+
+</section>
+<section>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >UCLASS( Blueprintable, ...)
+</code></pre>
+</div>
+
+</section>
+<section>
+
+<p>
+Asegurémonos de que todo compila correctamente
+</p>
+
+</section>
+<section>
+
+<p>
+Ahora volvemos a nuestra clase <i>blueprint</i> original, y cambiamos el padre:
+</p>
+
+
+<div id="org26c6ee7" class="figure">
+<p><img src="imgs/reparent_class.png" alt="reparent_class.png" height="250" />
+</p>
+<p><span class="figure-number">Figura 5: </span>Cambiar el padre de una clase</p>
+</div>
+
+
+</section>
+<section>
+
+<p>
+Ahora ya podemos <i>incluir</i> la clase <b>padre</b> en nuestro <code>ActorQueLlamaBP</code>
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >#include "ImprimidorPadreCPP.h"
+</code></pre>
+</div>
+
+<aside class="notes">
+<p>
+recálcales que es la <b>clase padre</b> sólo, pero que eso funciona porque la llamada no necesita tipos
+</p>
+
+</aside>
+
+</section>
+<section>
+
+<p>
+Y probamos:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >#include "Misc/OutputDeviceNull.h"
+
+// Si el BP se llama 'UImprimidorPadreCPP', y la función "Saludar"
+auto f = FindComponentByClass&lt;UImprimidorPadreCPP&gt;();
+if (nullptr != f) // comprobad siempre
+  {
+    FOutputDeviceNull n;
+    FString param = "\"hola a todos!\" 6";
+    FString cmd =
+      FString::Printf(
+                      TEXT("Saludar %s"),
+                      *param);
+
+    // Debe imprimir "hola a todos!" y "7" en pantalla
+    f-&gt;CallFunctionByNameWithArguments(
+       *cmd, n, nullptr, true);
+  }
+</code></pre>
+</div>
+
+</section>
+<section>
+
+
+<div id="orgb09c912" class="figure">
+<p><img src="imgs/salida_bp_desde_cpp.png" alt="salida_bp_desde_cpp.png" height="400" />
+</p>
+<p><span class="figure-number">Figura 6: </span>Ejemplo de salida llamado a una función <i>blueprint</i> desde C++</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-5">
+<h2 id="5"><span class="section-number-2">5.</span> Más maneras de interactuar BP/C++</h2>
+<div class="outline-text-2" id="text-5">
+</div>
+</section>
+<section id="slide-5-1">
+<h3 id="5-1"><span class="section-number-3">5.1.</span> <code>BlueprintImplementableEvent</code></h3>
+<p>
+Podemos declarar una función en C++, y la implementamos en una clase hija en <i>blueprint</i>:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >UFUNCTION(BlueprintImplementableEvent)
+void EventoBP(); // sin implementación!
+</code></pre>
+</div>
+
+<p>
+Y puedo llamar a <code>EventoBP</code> desde cualquier parte de C++
+</p>
+
+</section>
+<section>
+
+
+<div id="orgcfaad4c" class="figure">
+<p><img src="imgs/implementable_event_bp.png" alt="implementable_event_bp.png" height="400" />
+</p>
+<p><span class="figure-number">Figura 7: </span>Desde la clase BP que hereda de la clase C++ que tiene <code>EventoBP</code>, sobreescribimos el método</p>
+</div>
+
+</section>
+<section>
+
+<p>
+Sin parámetros ni salida (<code>void</code>) aparecerá como un evento (si no, como una función)
+</p>
+</section>
+<section id="slide-5-2">
+<h3 id="5-2"><span class="section-number-3">5.2.</span> <code>BlueprintNativeEvent</code></h3>
+<p>
+Es lo mismo que <code>BlueprintImplementableEvent</code>, pero nos permite dar una implementación nativa por defecto:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >UFUNCTION(BlueprintNativeEvent)
+void EventoBP();
+
+// ...
+
+void AMiActor::EventoBP_Implementation()
+{
+  // Implementación por defecto
+}
+</code></pre>
+</div>
+
+</section>
+<section>
+
+
+<div id="org33f9035" class="figure">
+<p><img src="imgs/recibir_evento_native_bp.png" alt="recibir_evento_native_bp.png" height="300" />
+</p>
+<p><span class="figure-number">Figura 8: </span>Podemos llamar a la implementación del padre (en C++) también</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-6">
+<h2 id="6"><span class="section-number-2">6.</span> Cosas que los <i>blueprints</i> no pueden hacer</h2>
+</section>
+<section>
+
+<p>
+Se puede llegar muy lejos con <i>blueprints</i>
+</p>
+
+<p>
+Pero hay algunas cosas que necesitan C++
+</p>
+</section>
+<section id="slide-6-1">
+<h3 id="6-1"><span class="section-number-3">6.1.</span> Importar librerías externas</h3>
+<p>
+Para código existente (en C++ u otros lenguajes), hay que usar C++
+</p>
+</section>
+<section id="slide-6-2">
+<h3 id="6-2"><span class="section-number-3">6.2.</span> Colaborar a nivel de módulo</h3>
+<p>
+Los <i>blueprints</i> son archivos binarios, es difícil ponerlos en control de versiones y trabajar por partes en paralelo
+</p>
+</section>
+<section id="slide-6-3">
+<h3 id="6-3"><span class="section-number-3">6.3.</span> Algunas cosas se expresan mejor en C++</h3>
+<p>
+Los <i>blueprints</i> están pensado para lógica de juego, no para algoritmos complejos y genéricos
+</p>
+
+<p>
+Muchas veces, el código C++ será más fácil de mantener que un script visual de <i>blueprints</i> muy complejo
+</p>
+</section>
+</section>
+<section>
+<section id="slide-7">
+<h2 id="7"><span class="section-number-2">7.</span> Eficiencia <i>blueprints</i> y eficiencia C++</h2>
+<blockquote>
+<p>
+Los <i>blueprints</i> son más lentos que C++
+</p>
+</blockquote>
+</section>
+<section id="slide-7-1">
+<h3 id="7-1"><span class="section-number-3">7.1.</span> Eficiencia del desarrollo</h3>
+<p>
+La eficiencia no está sólo en la ejecución, sino también en la velocidad
+a la que se crea el juego
+</p>
+
+</section>
+<section>
+
+<p>
+Con <i>blueprints</i>, en general, se llega antes a un prototipo jugable
+</p>
+
+</section>
+<section>
+
+<p>
+No hay que despreciar el tiempo de ciclo de prueba-compilación en C++
+</p>
+
+<p>
+Es alto, por el tipo de construcción de UE, pero ha mejorado mucho en cada versión
+</p>
+</section>
+<section id="slide-7-2">
+<h3 id="7-2"><span class="section-number-3">7.2.</span> Cómo usar C++ rápido</h3>
+<ul>
+<li>Experimentar/prototipar en <i>blueprints</i></li>
+<li>No cambiéis los <code>.h</code> a menudo</li>
+<li>Añadid mucho código antes de compilar</li>
+<li>Usad algo mejor que &laquo;Intellisense&raquo; (Visual Assist, por ejemplo)</li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-8">
+<h2 id="8"><span class="section-number-2">8.</span> Ampliaciones</h2>
+</section>
+<section>
+
+<ul>
+<li>Implementar todo el ejemplo que se ha puesto</li>
+<li>Que se cree un texto en pantalla (no con un <code>print</code>, sino con un <i>billboard</i>) indicando qué hay que hacer</li>
+<li>Hacer que la celda se suba con un <i>timeline</i> como respuesta al evento de antes de terminar</li>
+
+</ul>
+</section>
+</section>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js/dist/plugin/notes.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js/dist/plugin/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js/dist/plugin/search.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js/dist/plugin/zoom.js"></script>
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+
+controls: true,
+progress: true,
+history: true,
+center: true,
+slideNumber: 'c',
+rollingLinks: false,
+keyboard: true,
+mouseWheel: false,
+fragmentInURL: false,
+hashOneBasedIndex: true,
+pdfSeparateFragments: true,
+overview: true,
+margin: 0.02,
+minScale: 0.20,
+maxScale: 1.20,
+
+transition: 'slide',
+transitionSpeed: 'fast',
+hash: true,
+
+// Plugins with reveal.js 4.x and later
+plugins: [ RevealNotes, RevealHighlight, RevealSearch, RevealZoom ],
+
+// Optional libraries used to extend reveal.js
+dependencies: [
+]
+
+});
+</script>
+</body>
+</html>

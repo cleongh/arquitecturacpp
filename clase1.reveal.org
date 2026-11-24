@@ -132,10 +132,13 @@ Al instalarla, aseguraos de que se instala:
 - Programming Languages $\rightarrow$ C++
 - En el "Visual Studio Installer" (=Herramientas= $\rightarrow$ =Obtener herramientas y características...=):
   - [[https://learn.microsoft.com/en-us/visualstudio/gamedev/unreal/get-started/vs-tools-unreal-install][Desarrollo de juegos con C++]]
-    - Windows 10 SDK
-    - Compatibilidad con IDE para el motor de Unreal
-    - Visual Studio Integration Tool (bazar de la Epic Store)     
-      
+  - Windows 11 SDK (que debería estar)
+
+#+REVEAL: split
+
+Es muy útil instalar también las herramientas de VS + Unreal Engine, que os aparecerá por defecto cuando arranquéis el proyecto en VS
+
+Instaladlas *en el proyecto*, no en el motor (hay un botón para ello)
       
 #+REVEAL: split
 
@@ -143,9 +146,6 @@ En macOS, [[https://developer.apple.com/xcode/][Xcode]] es una alternativa váli
 
 También se pueden usar Rider y VSCode, y cualquier otro editor más simple que pueda compilar y depurar
 
-#+BEGIN_NOTES
-- Explica que UE usa compilación "normal"
-#+END_NOTES
 
 #+REVEAL: split
 

@@ -408,8 +408,12 @@ Ahora vamos a compilar nuestro proyecto:
 
 #+REVEAL: split
 
-También tenemos un "atajo" para ~UE_LOG~, más cómodo y flexible: [[https://unrealcommunity.wiki/logging-lgpidy6i#logging-using-ue_logfmt][~UE_LOGFMT~]]
+También tenemos una versión más moderna para ~UE_LOG~, más cómodo y flexible: [[https://unrealcommunity.wiki/logging-lgpidy6i#logging-using-ue_logfmt][~UE_LOGFMT~]]
 
+- Interpolación: ="Me llamo {nombre}"=
+- No hace falta ="TEXT(...)"=
+- No hace falta conversión en general (=*fstring=)
+- Hace falta =#include "Logging/StructuredLog.h=
 
 * Usando UE como código
 
@@ -655,8 +659,8 @@ Hace que el =FString= devuelva su =TCHAR= interno (un =TCHAR= /suele/ ser 2 byte
 Dado que en Unreal se hace un uso tan extensivo de macros, si cometemos un error (fijémonos en =name=):
 
 #+begin_src cpp
-FString name = GetOwner()->GetName();
-UE_LOG(LogTemp, Warning, TEXT("Hola, soy %s"), name);
+  FString name = GetOwner()->GetName();
+  UE_LOG(LogTemp, Warning, TEXT("Hola, soy %s"), name);
 #+end_src
 
 #+REVEAL: split

@@ -111,7 +111,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE()
 
 #+REVEAL: split
 
-Un [[https://dev.epicgames.com/documentation/unreal-engine/delegates-and-lambda-functions-in-unreal-engine?application_version=5.6][/delegate/]] es una estructura que encapsula una llamada a función
+Un [[https://dev.epicgames.com/documentation/unreal-engine/delegates-and-lambda-functions-in-unreal-engine?application_version=5.6][/delegate/]] es una estructura que encapsula una llamada a función o evento
 
 Se usan para conectar /blueprints/ con C++
 
@@ -311,22 +311,23 @@ En él, creamos una función que imprima un texto por pantalla
 Ahora creamos un =Actor= en C++, y en algún sitio (=Tick=, =BeginPlay=):
 
 #+begin_src cpp
-#include "Misc/OutputDeviceNull.h"
+  #include "Misc/OutputDeviceNull.h"
 
-// UImprimidorPadreCPP no existe aún
-auto f = FindComponentByClass<UImprimidorPadreCPP>();
-if (nullptr != f)
-{
-    // puede ser este null ahora
-    FOutputDeviceNull n;
+  // UImprimidorPadreCPP no existe aún
+  auto f = FindComponentByClass<UImprimidorPadreCPP>();
+  if (nullptr != f)
+  {
+      // Dispositivo de salida que ignora el output de
+      // la llamada
+      FOutputDeviceNull n;
 
-    f->CallFunctionByNameWithArguments(
-        TEXT("Saludar \"hola a todos\""),
-        n,  // dispositivo de salida
-        nullptr, // objeto sobre el que se ejecuta (null vale)
-        true); // llamar incluso si la función
-               // no es "Exec "(T vale)
-}
+      f->CallFunctionByNameWithArguments(
+          TEXT("Saludar \"hola a todos\""),
+          n,  // dispositivo de salida (para log)
+          nullptr, // objeto "que lanza la call" (null casi siempre)
+          true); // llamar incluso si la función
+                 // no es "Exec "(T vale)
+  }
 #+end_src
 
 #+REVEAL: split

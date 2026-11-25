@@ -239,7 +239,7 @@ La clase <code>UFloatingPawnMovement</code> no estará reconocida por el compila
 </p>
 
 
-<div id="org5836459" class="figure">
+<div id="org0df84fa" class="figure">
 <p><img src="imgs/includes_extra.png" alt="includes_extra.png" width="600" />
 </p>
 <p><span class="figure-number">Figura 1: </span>La manera más secilla es buscar la clase en Internet, y en la documentación de Unreal veremos la ruta del <code>#include</code></p>
@@ -281,7 +281,7 @@ _camera-&gt;SetupAttachment(arm);
 <section>
 
 
-<div id="orgf6a4a99" class="figure">
+<div id="orgf3176be" class="figure">
 <p><img src="imgs/asignar_game_mode.png" alt="asignar_game_mode.png" height="450" />
 </p>
 <p><span class="figure-number">Figura 2: </span>También podemos crear una escena nueva, y asignarle el <code>Game Mode</code> correspondiente</p>
@@ -322,7 +322,7 @@ A no ser que sepamos muy bien lo que estamos haciendo, no hay que crear <code>UO
 <section>
 
 <p>
-Todos estos métodos llevan el tipo como parámetro de plantilla:
+Estos métodos tienen sobrecargas que llevan el tipo como parámetro de plantilla (o equivalentes):
 </p>
 
 <div class="org-src-container">
@@ -471,173 +471,7 @@ Añadimos una instancia a la escena, asignamos su malla, y se verá instanciada 
 </section>
 <section>
 <section id="slide-6">
-<h2 id="6"><span class="section-number-2">6.</span> Entrada con <code>Enhanced Input</code></h2>
-<div class="outline-text-2" id="text-6">
-</div>
-</section>
-<section id="slide-6-1">
-<h3 id="6-1"><span class="section-number-3">6.1.</span> Entrada hasta UE4</h3>
-<p>
-UE4 usa un motor de entrada más sencillo que UE \(\geq 5\)
-</p>
-</section>
-<section id="slide-6-2">
-<h3 id="6-2"><span class="section-number-3">6.2.</span> Enhanced Input</h3>
-<p>
-Para que UE reconozca el subsistema de entrada nuevo, hay que asegurarse de que la cadena <code>"EnhancedInput"</code> está en el archivo <code>[NOMBRE_PROYECTO].Build.cs</code>, que estará en el mismo sitio que los <code>.cpp</code>:
-</p>
-
-<div class="org-src-container">
-
-<pre><code class="csharp" >PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
-</code></pre>
-</div>
-
-</section>
-<section>
-
-<p>
-En versiones recientes, esto ya estará añadido al crear el proyecto.
-</p>
-
-</section>
-<section>
-
-
-<div id="org3b3b0e2" class="figure">
-<p><img src="imgs/configurar_enhanced_input.png" alt="configurar_enhanced_input.png" height="300" />
-</p>
-<p><span class="figure-number">Figura 3: </span>Tenemos que asegurarnos (seguramente estará así por defecto) de que el subsistema mejorado está seleccionado por defecto</p>
-</div>
-
-</section>
-<section>
-
-<p>
-En la declaración de la clase de nuestro personaje (el <code>.h</code>), creamos punteros a las clases de Enhanced Input que antes hacíamos con Blueprints:
-</p>
-
-<div class="org-src-container">
-
-<pre><code class="cpp" >#include "InputMappingContext.h"
-#include "EnhancedInputComponent.h"
-// ...
-
-// El mapping context
-UInputMappingContext* _input_mapping_context;
-
-// Una acción (puede haber más)
-UInputAction* _move;
-</code></pre>
-</div>
-
-</section>
-<section>
-
-<p>
-En el constructor, las instanciamos:
-</p>
-
-<div class="org-src-container">
-
-<pre><code class="cpp" >_move = CreateDefaultSubobject&lt;UInputAction&gt;(TEXT("MoveAction"));
-
-_input_mapping_context = CreateDefaultSubobject&lt;UInputMappingContext&gt;(TEXT("NormalMapping"));	
-</code></pre>
-</div>
-
-</section>
-<section>
-
-<p>
-En en <code>.cpp</code> de nuestro <code>Pawn</code> vamos a configurar la entrada para que enlace los mappings y las acciones:
-</p>
-
-<div class="org-src-container">
-
-<pre><code class="cpp" >#include "EnhancedInputSubsystems.h"
-#include "Engine/LocalPlayer.h" 
-// ...
-void ACPPAdventurer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-        Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-        auto controller = Cast&lt;APlayerController&gt;(GetController());
-        if (auto system = controller-&gt;GetLocalPlayer()-&gt;GetSubsystem&lt;UEnhancedInputLocalPlayerSubsystem&gt;()) {
-                if (_input_mapping_context) {
-                        // el "1" es la prioridad del mapeo, cuanto más alta, más prioritario
-                        system-&gt;AddMappingContext(_input_mapping_context, 1);
-
-                        _move-&gt;bConsumeInput = true;
-                        _move-&gt;ValueType = EInputActionValueType::Axis1D;
-
-                        // hay más maneras de instanciar la tecla (FKey("W"))
-                        _input_mapping_context-&gt;MapKey(_move, EKeys::W);
-
-                        auto &amp; mapping = _input_mapping_context-&gt;MapKey(_move, EKeys::S);
-                        mapping.Modifiers.Add(NewObject&lt;UInputModifierNegate&gt;(this));
-                }
-        }
-
-        auto eic = Cast&lt;UEnhancedInputComponent&gt;(PlayerInputComponent);
-        eic-&gt;BindAction(_move, ETriggerEvent::Triggered, this, &amp;ACPPAdventurer::Move);
-}
-</code></pre>
-</div>
-
-</section>
-<section>
-
-<p>
-Y el método <code>Move</code> (que está en la clase como un método normal), usa el valor del eje para mover el <code>Actor</code>
-</p>
-
-<div class="org-src-container">
-
-<pre><code class="cpp" >void ACPPAdventurer::Move(const FInputActionValue&amp; v) {	
-        FVector forward = GetWorld()-&gt;
-                GetFirstPlayerController()-&gt;
-                PlayerCameraManager-&gt;
-                GetCameraRotation().Vector();
-        AddMovementInput(forward, v.GetMagnitude());
-}
-</code></pre>
-</div>
-
-
-</section>
-<section>
-
-<p>
-Con esto ya podemos hacer los movimientos en 4 direcciones o, mejor aún, que el personaje rote cuando usamos <i>izquierda</i> o <i>derecha</i>
-</p>
-
-</section>
-<section>
-
-<p>
-Buscad cómo rotar en la ayuda de UE
-</p>
-
-<p>
-Haremos otro <code>BindAction()</code> para la rotación
-</p>
-
-<p>
-Y moveremos la rotación del personaje
-</p>
-
-</section>
-<section>
-
-<p>
-Los <code>FRotator</code> se pueden sumar con el operador <code>+</code> (está sobrecargado)
-</p>
-</section>
-</section>
-<section>
-<section id="slide-7">
-<h2 id="7"><span class="section-number-2">7.</span> Propiedades para el editor</h2>
+<h2 id="6"><span class="section-number-2">6.</span> Propiedades para el editor</h2>
 </section>
 <section>
 
@@ -664,10 +498,10 @@ Creamos un Actor para la celda (como <i>blueprint</i>)
 </p>
 
 
-<div id="orgd34af17" class="figure">
+<div id="org4b3e9a4" class="figure">
 <p><img src="imgs/celda.png" alt="celda.png" height="500" />
 </p>
-<p><span class="figure-number">Figura 4: </span>Se puede hacer la celda con varios <code>Cube</code> en el blueprint</p>
+<p><span class="figure-number">Figura 3: </span>Se puede hacer la celda con varios <code>Cube</code> en el blueprint</p>
 </div>
 
 </section>
@@ -719,10 +553,10 @@ Como ya dijimos, no olvidemos hacer la entidad <code>Movable</code> para que sus
 </p>
 
 
-<div id="org66d3b31" class="figure">
+<div id="org4d14dfa" class="figure">
 <p><img src="imgs/celda_movable.png" alt="celda_movable.png" height="200" />
 </p>
-<p><span class="figure-number">Figura 5: </span>Hacer un objeto <code>Movable</code></p>
+<p><span class="figure-number">Figura 4: </span>Hacer un objeto <code>Movable</code></p>
 </div>
 
 </section>
@@ -794,8 +628,8 @@ Se pueden hacer categorías y subcategorías:
 Podéis encontrar los muchos parámetros que se pueden poner en la documentación de las <a href="https://docs.unrealengine.com/latest/en-US/unreal-engine-uproperties/">propiedades</a> y los <a href="https://docs.unrealengine.com/latest/en-US/metadata-specifiers-in-unreal-engine/">metadatos</a>
 </p>
 </section>
-<section id="slide-7-1">
-<h3 id="7-1"><span class="section-number-3">7.1.</span> Relaciones entre entidades</h3>
+<section id="slide-6-1">
+<h3 id="6-1"><span class="section-number-3">6.1.</span> Relaciones entre entidades</h3>
 <p>
 Hay una relación de dependencia entre nuestro personaje principal y nuestra celda
 </p>
@@ -826,8 +660,8 @@ Pero <i>nuestro héroe se crea en tiempo de ejecución, no antes</i>
 </section>
 </section>
 <section>
-<section id="slide-8">
-<h2 id="8"><span class="section-number-2">8.</span> Accediendo a distintas entidades desde C++</h2>
+<section id="slide-7">
+<h2 id="7"><span class="section-number-2">7.</span> Accediendo a distintas entidades desde C++</h2>
 </section>
 <section>
 
@@ -869,8 +703,8 @@ Hasta ahora habíamos trabajado con acceso desde <i>abajo</i> hasta <i>arriba</i
 Pero es muy útil poder acceder de arriba a abajo, es decir, desde la entidad superior, a la entidad que está incluida en ella
 </p>
 </section>
-<section id="slide-8-1">
-<h3 id="8-1"><span class="section-number-3">8.1.</span> <code>GetWorld</code></h3>
+<section id="slide-7-1">
+<h3 id="7-1"><span class="section-number-3">7.1.</span> <code>GetWorld</code></h3>
 <p>
 <code>GetWorld</code> nos da acceso a todo el mundo
 </p>
@@ -933,11 +767,11 @@ Pero podemos hacer <i>casting</i>
 
 <div class="org-src-container">
 
-<pre><code class="cpp" >TObjectPtr&lt;APawn&gt; *pawn = GetWorld()-&gt;
+<pre><code class="cpp" >TObjectPtr&lt;APawn&gt; pawn = GetWorld()-&gt;
     GetFirstPlayerController()-&gt;
     GetPawn();
 
-// puede devolver `nullptr` si el casting falla
+// dinámico, puede devolver `nullptr` si el casting falla
 _adventurer = Cast&lt;ACPPAdventurer&gt;(pawn); 
 </code></pre>
 </div>
@@ -946,7 +780,7 @@ _adventurer = Cast&lt;ACPPAdventurer&gt;(pawn);
 <section>
 
 <p>
-Así, vamos a hacer que en el <code>TickComponent</code> apropiado (es decir, en cada frame del juego, en el componente):
+Así, vamos a hacer que en el <code>TickComponent</code> apropiado (es decir, en cada <i>frame</i> del juego, en el componente):
 </p>
 
 <ul>
@@ -955,8 +789,8 @@ Así, vamos a hacer que en el <code>TickComponent</code> apropiado (es decir, en
 
 </ul>
 </section>
-<section id="slide-8-2">
-<h3 id="8-2"><span class="section-number-3">8.2.</span> <code>FindComponentByClass</code></h3>
+<section id="slide-7-2">
+<h3 id="7-2"><span class="section-number-3">7.2.</span> <code>FindComponentByClass</code></h3>
 <p>
 Aunque en Unreal se pueden hacer muchas alternativas, es bastante común que un componente de la entidad quiera acceder a otro componente de la misma entidad
 </p>
@@ -974,8 +808,8 @@ Para eso tenemos el método <code>FindComponentByClass</code>:
 </section>
 </section>
 <section>
-<section id="slide-9">
-<h2 id="9"><span class="section-number-2">9.</span> Ojo con los <code>colliders</code></h2>
+<section id="slide-8">
+<h2 id="8"><span class="section-number-2">8.</span> Ojo con los <code>colliders</code></h2>
 </section>
 <section>
 
@@ -1031,8 +865,8 @@ Hay un desafío, y hay que seguir las reglas preestablecidas para solucionarlo
 </section>
 </section>
 <section>
-<section id="slide-10">
-<h2 id="10"><span class="section-number-2">10.</span> TArray</h2>
+<section id="slide-9">
+<h2 id="9"><span class="section-number-2">9.</span> TArray</h2>
 </section>
 <section>
 
@@ -1083,8 +917,8 @@ Cada elemento serán los puntos que dé cada punto blanco que nos hemos &laquo;c
 Tendremos métodos para sumar puntos (por parámetro) y un método para devolver los puntos actuales
 </p>
 </section>
-<section id="slide-10-1">
-<h3 id="10-1"><span class="section-number-3">10.1.</span> Comer puntos</h3>
+<section id="slide-9-1">
+<h3 id="9-1"><span class="section-number-3">9.1.</span> Comer puntos</h3>
 <p>
 Falta hacer la lógica de las &laquo;gemas&raquo;
 </p>
@@ -1127,10 +961,10 @@ Para que las cosas solapen (es decir, <b>no colisionen</b>), es mejor cambiar la
 </p>
 
 
-<div id="org7099ab5" class="figure">
+<div id="orgda3a6d0" class="figure">
 <p><img src="imgs/overlap_all.png" alt="overlap_all.png" height="200" />
 </p>
-<p><span class="figure-number">Figura 6: </span>En el <i>blueprint</i> de las gemas, en la esfera que tienen, establecemos &laquo;overlap&raquo;</p>
+<p><span class="figure-number">Figura 5: </span>En el <i>blueprint</i> de las gemas, en la esfera que tienen, establecemos &laquo;overlap&raquo;</p>
 </div>
 
 
@@ -1184,8 +1018,8 @@ Necesitaremos que la gema (y la fruta) tengan una referencia al jugador principa
 </section>
 </section>
 <section>
-<section id="slide-11">
-<h2 id="11"><span class="section-number-2">11.</span> Para acabar</h2>
+<section id="slide-10">
+<h2 id="10"><span class="section-number-2">10.</span> Para acabar</h2>
 </section>
 <section>
 
@@ -1212,8 +1046,8 @@ UGameplayStatics::OpenLevel(this, TEXT("Fin"));
 </section>
 </section>
 <section>
-<section id="slide-12">
-<h2 id="12"><span class="section-number-2">12.</span> Ejercicios</h2>
+<section id="slide-11">
+<h2 id="11"><span class="section-number-2">11.</span> Ejercicios</h2>
 <ul>
 <li>Implementar la mecánica básica del juego
 <ul>

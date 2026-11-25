@@ -245,7 +245,7 @@ A no ser que sepamos muy bien lo que estamos haciendo, no hay que crear =UObject
 
 #+REVEAL: split
 
-Todos estos métodos llevan el tipo como parámetro de plantilla:
+Estos métodos tienen sobrecargas que llevan el tipo como parámetro de plantilla (o equivalentes):
 
 #+begin_src cpp
 auto input_modifier = NewObject<UInputModifierNegate>(this);
@@ -343,120 +343,120 @@ void ADecorador::BeginPlay()
 Añadimos una instancia a la escena, asignamos su malla, y se verá instanciada al darle a =Play=
 
 
-* Entrada con ~Enhanced Input~
+# * Entrada con ~Enhanced Input~
 
-** Entrada hasta UE4
+# ** Entrada hasta UE4
 
-UE4 usa un motor de entrada más sencillo que UE $\geq 5$
+# UE4 usa un motor de entrada más sencillo que UE $\geq 5$
 
-** Enhanced Input
+# ** Enhanced Input
 
-Para que UE reconozca el subsistema de entrada nuevo, hay que asegurarse de que la cadena ~"EnhancedInput"~ está en el archivo =[NOMBRE_PROYECTO].Build.cs=, que estará en el mismo sitio que los =.cpp=:
+# Para que UE reconozca el subsistema de entrada nuevo, hay que asegurarse de que la cadena ~"EnhancedInput"~ está en el archivo =[NOMBRE_PROYECTO].Build.cs=, que estará en el mismo sitio que los =.cpp=:
 
-#+begin_src csharp
-PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
-#+end_src
+# #+begin_src csharp
+# PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+# #+end_src
 
-#+REVEAL: split
+# #+REVEAL: split
 
-En versiones recientes, esto ya estará añadido al crear el proyecto.
+# En versiones recientes, esto ya estará añadido al crear el proyecto.
 
-#+REVEAL: split
+# #+REVEAL: split
 
-#+caption: Tenemos que asegurarnos (seguramente estará así por defecto) de que el subsistema mejorado está seleccionado por defecto
-#+attr_html: :height 300
-[[file:imgs/configurar_enhanced_input.png]]
+# #+caption: Tenemos que asegurarnos (seguramente estará así por defecto) de que el subsistema mejorado está seleccionado por defecto
+# #+attr_html: :height 300
+# [[file:imgs/configurar_enhanced_input.png]]
 
-#+REVEAL: split
+# #+REVEAL: split
 
-En la declaración de la clase de nuestro personaje (el =.h=), creamos punteros a las clases de Enhanced Input que antes hacíamos con Blueprints:
+# En la declaración de la clase de nuestro personaje (el =.h=), creamos punteros a las clases de Enhanced Input que antes hacíamos con Blueprints:
 
-#+begin_src cpp
-#include "InputMappingContext.h"
-#include "EnhancedInputComponent.h"
-// ...
+# #+begin_src cpp
+# #include "InputMappingContext.h"
+# #include "EnhancedInputComponent.h"
+# // ...
 
-// El mapping context
-UInputMappingContext* _input_mapping_context;
+# // El mapping context
+# UInputMappingContext* _input_mapping_context;
 
-// Una acción (puede haber más)
-UInputAction* _move;
-#+end_src
+# // Una acción (puede haber más)
+# UInputAction* _move;
+# #+end_src
 
-#+REVEAL: split
+# #+REVEAL: split
 
-En el constructor, las instanciamos:
+# En el constructor, las instanciamos:
 
-#+begin_src cpp
-_move = CreateDefaultSubobject<UInputAction>(TEXT("MoveAction"));
+# #+begin_src cpp
+# _move = CreateDefaultSubobject<UInputAction>(TEXT("MoveAction"));
 
-_input_mapping_context = CreateDefaultSubobject<UInputMappingContext>(TEXT("NormalMapping"));	
-#+end_src
+# _input_mapping_context = CreateDefaultSubobject<UInputMappingContext>(TEXT("NormalMapping"));	
+# #+end_src
 
-#+REVEAL: split
+# #+REVEAL: split
 
-En en =.cpp= de nuestro =Pawn= vamos a configurar la entrada para que enlace los mappings y las acciones:
+# En en =.cpp= de nuestro =Pawn= vamos a configurar la entrada para que enlace los mappings y las acciones:
 
-#+begin_src cpp
-#include "EnhancedInputSubsystems.h"
-#include "Engine/LocalPlayer.h" 
-// ...
-void ACPPAdventurer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+# #+begin_src cpp
+# #include "EnhancedInputSubsystems.h"
+# #include "Engine/LocalPlayer.h" 
+# // ...
+# void ACPPAdventurer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+# {
+# 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	auto controller = Cast<APlayerController>(GetController());
-	if (auto system = controller->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>()) {
-		if (_input_mapping_context) {
-			// el "1" es la prioridad del mapeo, cuanto más alta, más prioritario
-			system->AddMappingContext(_input_mapping_context, 1);
+# 	auto controller = Cast<APlayerController>(GetController());
+# 	if (auto system = controller->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>()) {
+# 		if (_input_mapping_context) {
+# 			// el "1" es la prioridad del mapeo, cuanto más alta, más prioritario
+# 			system->AddMappingContext(_input_mapping_context, 1);
 
-			_move->bConsumeInput = true;
-			_move->ValueType = EInputActionValueType::Axis1D;
+# 			_move->bConsumeInput = true;
+# 			_move->ValueType = EInputActionValueType::Axis1D;
 
-			// hay más maneras de instanciar la tecla (FKey("W"))
-			_input_mapping_context->MapKey(_move, EKeys::W);
+# 			// hay más maneras de instanciar la tecla (FKey("W"))
+# 			_input_mapping_context->MapKey(_move, EKeys::W);
 
-			auto & mapping = _input_mapping_context->MapKey(_move, EKeys::S);
-			mapping.Modifiers.Add(NewObject<UInputModifierNegate>(this));
-		}
-	}
+# 			auto & mapping = _input_mapping_context->MapKey(_move, EKeys::S);
+# 			mapping.Modifiers.Add(NewObject<UInputModifierNegate>(this));
+# 		}
+# 	}
 
-	auto eic = Cast<UEnhancedInputComponent>(PlayerInputComponent);
-	eic->BindAction(_move, ETriggerEvent::Triggered, this, &ACPPAdventurer::Move);
-}
-#+end_src
+# 	auto eic = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+# 	eic->BindAction(_move, ETriggerEvent::Triggered, this, &ACPPAdventurer::Move);
+# }
+# #+end_src
 
-#+REVEAL: split
+# #+REVEAL: split
 
-Y el método =Move= (que está en la clase como un método normal), usa el valor del eje para mover el =Actor=
+# Y el método =Move= (que está en la clase como un método normal), usa el valor del eje para mover el =Actor=
 
-#+begin_src cpp
-void ACPPAdventurer::Move(const FInputActionValue& v) {	
-	FVector forward = GetWorld()->
-		GetFirstPlayerController()->
-		PlayerCameraManager->
-		GetCameraRotation().Vector();
-	AddMovementInput(forward, v.GetMagnitude());
-}
-#+end_src
+# #+begin_src cpp
+# void ACPPAdventurer::Move(const FInputActionValue& v) {	
+# 	FVector forward = GetWorld()->
+# 		GetFirstPlayerController()->
+# 		PlayerCameraManager->
+# 		GetCameraRotation().Vector();
+# 	AddMovementInput(forward, v.GetMagnitude());
+# }
+# #+end_src
 
 
-#+REVEAL: split
+# #+REVEAL: split
 
-Con esto ya podemos hacer los movimientos en 4 direcciones o, mejor aún, que el personaje rote cuando usamos /izquierda/ o /derecha/
+# Con esto ya podemos hacer los movimientos en 4 direcciones o, mejor aún, que el personaje rote cuando usamos /izquierda/ o /derecha/
 
-#+REVEAL: split
+# #+REVEAL: split
 
-Buscad cómo rotar en la ayuda de UE
+# Buscad cómo rotar en la ayuda de UE
 
-Haremos otro =BindAction()= para la rotación
+# Haremos otro =BindAction()= para la rotación
 
-Y moveremos la rotación del personaje
+# Y moveremos la rotación del personaje
 
-#+REVEAL: split
+# #+REVEAL: split
 
-Los =FRotator= se pueden sumar con el operador =+= (está sobrecargado)
+# Los =FRotator= se pueden sumar con el operador =+= (está sobrecargado)
 
 
 
@@ -638,17 +638,17 @@ Pero podemos hacer /casting/
 #+REVEAL: split
 
 #+begin_src cpp
-TObjectPtr<APawn> *pawn = GetWorld()->
+TObjectPtr<APawn> pawn = GetWorld()->
     GetFirstPlayerController()->
     GetPawn();
 
-// puede devolver `nullptr` si el casting falla
+// dinámico, puede devolver `nullptr` si el casting falla
 _adventurer = Cast<ACPPAdventurer>(pawn); 
 #+end_src
 
 #+REVEAL: split
 
-Así, vamos a hacer que en el =TickComponent= apropiado (es decir, en cada frame del juego, en el componente):
+Así, vamos a hacer que en el =TickComponent= apropiado (es decir, en cada /frame/ del juego, en el componente):
 
 - cuente los puntos del héroe
 - y, si tiene más puntos que un umbral dado (¡hacemos un =UPROPERTY=!), la celda se eleve

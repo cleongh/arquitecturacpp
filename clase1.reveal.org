@@ -945,10 +945,14 @@ UE, en su clase /mundo/, nos ofrece =UWorld::SpawnActor=
 Pongamos esto en el =Tick= de nuestro actor C++, debajo de la llamado al ~Tick~ de ~Super~:
 
 #+begin_src cpp
-FTransform spawnedTransform = GetTransform();
-spawnedTransform.AddToTranslation( FVector{ 100.f, 0.f, 0.f } );
-GetWorld()->SpawnActor<AActor>(AActor::StaticClass(),
-                                    spawnedTransform);
+  FTransform spawnedTransform = GetTransform();
+  spawnedTransform.AddToTranslation( FVector{ 100.f, 0.f, 0.f } );
+  // Devuelve un puntero a AActor, hay variantes
+  // de la llama sin el parámetro de reflection
+  GetWorld()->SpawnActor<AActor>(AActor::StaticClass(),
+                                      spawnedTransform);
+
+
 #+end_src
 
 Ejecutemos el juego, hagamos =Eject= (=F8=) y veamos cómo evoluciona la escena

@@ -604,7 +604,11 @@ En la implementación, el el método =BeginPlay=, añadamos una llamada a =GetOw
 
 =GetOwner()= nos da un puntero al =Actor= dentro del cual está el componente, y podemos acceder, entonces, a los métodos generales, como =GetName()= y otros
 
-=GetName()= nos da el nombre del =Actor= (tal como lo hayamos creado en el editor) en forma de =FString=
+#+REVEAL: split
+
+- Los objetos de UE tienen un identificador de tipo =FName=,
+- pero =GetName()= nos da el nombre del =Actor= (tal como lo hayamos creado en el editor) en forma de =FString=
+- =GetFName()= devuelve el /id/ como =FName=
 
 #+REVEAL: split
 
@@ -644,7 +648,7 @@ La macro =TEXT()= evita que una cadena de caracteres literal (un /string/ puesto
 
 El asterisco que hemos visto antes, realmente, es una sobrecarga particular del operador en UE
 
-Hace que el =FString= devuelva su =TCHAR= interno
+Hace que el =FString= devuelva su =TCHAR= interno (un =TCHAR= /suele/ ser 2 bytes)
 
 ** Problema
 

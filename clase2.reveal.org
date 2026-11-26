@@ -265,11 +265,15 @@ Unreal 5 tiene una versión más controlada de los [[https://unrealcommunity.wik
 
 #+REVEAL: split
 
-Reemplazan los punteros "crudos" a assets, haciendo que se automatice la carga perezosa
+Mientras haya un =TObjectPtr=, el recolector de basura no limpiará el =UObject=
+
+Reemplazan los punteros "crudos" a assets
+
+#+REVEAL: split
 
 Además, cuando se construye en una versión que no es de editor, se optimiza
 
-En general, se recomienda su uso como reemplazo para =UPROPERTIES= (porque el beneficio está en el editor):
+En general, se recomienda su uso como reemplazo para =UPROPERTIES=:
 
 #+begin_src cpp
 UPROPERTY(EditAnywhere)
@@ -280,9 +284,9 @@ TObjectPtr<ACPPAdventurer> _adventurer;
 
 #+REVEAL: split
 
-- =TObjectPtr<T>= (o simplemente el punto con el =UPROPERTY=) toma posesión (quizá compartida) de un asset
-- =TWeakObjectPtr<T>= es un puntero débil sin posesión, pero tiene el coste de comprobar que el objeto no ha sido limpiado (=TObjectPtr= /nullifica/ las referencias, es más eficiente)
-- =TSoftObjectPtr<T>= es como un =weak=, pero tiene funcionalidad para la carga perezosa
+- =TObjectPtr<T>= (o simplemente el punto con el =UPROPERTY=) toma posesión (quizá compartida) de un objeto
+- =TWeakObjectPtr<T>= es un puntero débil sin posesión (el recolector se puede lanzar), pero tiene el coste de comprobar que el objeto no ha sido limpiado (=TObjectPtr= /nullifica/ las referencias, es más eficiente)
+- =TSoftObjectPtr<T>= es algo distinto: se guarda la referencia pero solo carga (ruta de asset) cuando necesita
 
 
 ** Probando carga con TObjectPtr
@@ -328,7 +332,7 @@ ADecorador::ADecorador()
 
 #+REVEAL: split
 
-En =BeginPlay=:
+Carga síncrona en =BeginPlay=:
 
 #+begin_src cpp
 void ADecorador::BeginPlay()
@@ -340,123 +344,140 @@ void ADecorador::BeginPlay()
 
 #+REVEAL: split
 
+#+begin_src cpp
+  FStreamableDelegate Delegate =
+    FStreamableDelegate::CreateUObject
+      (
+       this,
+       &MiActor::MetodoDeAvisar
+      );
+
+  UAssetManager::GetStreamableManager().RequestAsyncLoad
+    (
+     _malla_component.ToSoftObjectPath(),
+     Delegate
+    );
+#+end_src
+
+#+REVEAL: split
+
 Añadimos una instancia a la escena, asignamos su malla, y se verá instanciada al darle a =Play=
 
 
-# * Entrada con ~Enhanced Input~
+y* Entrada con ~Enhanced Input~
 
-# ** Entrada hasta UE4
+** Entrada hasta UE4
 
-# UE4 usa un motor de entrada más sencillo que UE $\geq 5$
+UE4 usa un motor de entrada más sencillo que UE $\geq 5$
 
-# ** Enhanced Input
+** Enhanced Input
 
-# Para que UE reconozca el subsistema de entrada nuevo, hay que asegurarse de que la cadena ~"EnhancedInput"~ está en el archivo =[NOMBRE_PROYECTO].Build.cs=, que estará en el mismo sitio que los =.cpp=:
+Para que UE reconozca el subsistema de entrada nuevo, hay que asegurarse de que la cadena ~"EnhancedInput"~ está en el archivo =[NOMBRE_PROYECTO].Build.cs=, que estará en el mismo sitio que los =.cpp=:
 
-# #+begin_src csharp
-# PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
-# #+end_src
+#+begin_src csharp
+PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+#+end_src
 
-# #+REVEAL: split
+#+REVEAL: split
 
-# En versiones recientes, esto ya estará añadido al crear el proyecto.
+En versiones recientes, esto ya estará añadido al crear el proyecto.
 
-# #+REVEAL: split
+#+REVEAL: split
 
-# #+caption: Tenemos que asegurarnos (seguramente estará así por defecto) de que el subsistema mejorado está seleccionado por defecto
-# #+attr_html: :height 300
-# [[file:imgs/configurar_enhanced_input.png]]
+#+caption: Tenemos que asegurarnos (seguramente estará así por defecto) de que el subsistema mejorado está seleccionado por defecto
+#+attr_html: :height 300
+[[file:imgs/configurar_enhanced_input.png]]
 
-# #+REVEAL: split
+#+REVEAL: split
 
-# En la declaración de la clase de nuestro personaje (el =.h=), creamos punteros a las clases de Enhanced Input que antes hacíamos con Blueprints:
+En la declaración de la clase de nuestro personaje (el =.h=), creamos punteros a las clases de Enhanced Input que antes hacíamos con Blueprints:
 
-# #+begin_src cpp
-# #include "InputMappingContext.h"
-# #include "EnhancedInputComponent.h"
-# // ...
+#+begin_src cpp
+#include "InputMappingContext.h"
+#include "EnhancedInputComponent.h"
+// ...
 
-# // El mapping context
-# UInputMappingContext* _input_mapping_context;
+// El mapping context
+UInputMappingContext* _input_mapping_context;
 
-# // Una acción (puede haber más)
-# UInputAction* _move;
-# #+end_src
+// Una acción (puede haber más)
+UInputAction* _move;
+#+end_src
 
-# #+REVEAL: split
+#+REVEAL: split
 
-# En el constructor, las instanciamos:
+En el constructor, las instanciamos:
 
-# #+begin_src cpp
-# _move = CreateDefaultSubobject<UInputAction>(TEXT("MoveAction"));
+#+begin_src cpp
+_move = CreateDefaultSubobject<UInputAction>(TEXT("MoveAction"));
 
-# _input_mapping_context = CreateDefaultSubobject<UInputMappingContext>(TEXT("NormalMapping"));	
-# #+end_src
+_input_mapping_context = CreateDefaultSubobject<UInputMappingContext>(TEXT("NormalMapping"));	
+#+end_src
 
-# #+REVEAL: split
+#+REVEAL: split
 
-# En en =.cpp= de nuestro =Pawn= vamos a configurar la entrada para que enlace los mappings y las acciones:
+En en =.cpp= de nuestro =Pawn= vamos a configurar la entrada para que enlace los mappings y las acciones:
 
-# #+begin_src cpp
-# #include "EnhancedInputSubsystems.h"
-# #include "Engine/LocalPlayer.h" 
-# // ...
-# void ACPPAdventurer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-# {
-# 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+#+begin_src cpp
+#include "EnhancedInputSubsystems.h"
+#include "Engine/LocalPlayer.h" 
+// ...
+void ACPPAdventurer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-# 	auto controller = Cast<APlayerController>(GetController());
-# 	if (auto system = controller->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>()) {
-# 		if (_input_mapping_context) {
-# 			// el "1" es la prioridad del mapeo, cuanto más alta, más prioritario
-# 			system->AddMappingContext(_input_mapping_context, 1);
+	auto controller = Cast<APlayerController>(GetController());
+	if (auto system = controller->GetLocalPlayer()->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>()) {
+		if (_input_mapping_context) {
+			// el "1" es la prioridad del mapeo, cuanto más alta, más prioritario
+			system->AddMappingContext(_input_mapping_context, 1);
 
-# 			_move->bConsumeInput = true;
-# 			_move->ValueType = EInputActionValueType::Axis1D;
+			_move->bConsumeInput = true;
+			_move->ValueType = EInputActionValueType::Axis1D;
 
-# 			// hay más maneras de instanciar la tecla (FKey("W"))
-# 			_input_mapping_context->MapKey(_move, EKeys::W);
+			// hay más maneras de instanciar la tecla (FKey("W"))
+			_input_mapping_context->MapKey(_move, EKeys::W);
 
-# 			auto & mapping = _input_mapping_context->MapKey(_move, EKeys::S);
-# 			mapping.Modifiers.Add(NewObject<UInputModifierNegate>(this));
-# 		}
-# 	}
+			auto & mapping = _input_mapping_context->MapKey(_move, EKeys::S);
+			mapping.Modifiers.Add(NewObject<UInputModifierNegate>(this));
+		}
+	}
 
-# 	auto eic = Cast<UEnhancedInputComponent>(PlayerInputComponent);
-# 	eic->BindAction(_move, ETriggerEvent::Triggered, this, &ACPPAdventurer::Move);
-# }
-# #+end_src
+	auto eic = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	eic->BindAction(_move, ETriggerEvent::Triggered, this, &ACPPAdventurer::Move);
+}
+#+end_src
 
-# #+REVEAL: split
+#+REVEAL: split
 
-# Y el método =Move= (que está en la clase como un método normal), usa el valor del eje para mover el =Actor=
+Y el método =Move= (que está en la clase como un método normal), usa el valor del eje para mover el =Actor=
 
-# #+begin_src cpp
-# void ACPPAdventurer::Move(const FInputActionValue& v) {	
-# 	FVector forward = GetWorld()->
-# 		GetFirstPlayerController()->
-# 		PlayerCameraManager->
-# 		GetCameraRotation().Vector();
-# 	AddMovementInput(forward, v.GetMagnitude());
-# }
-# #+end_src
+#+begin_src cpp
+void ACPPAdventurer::Move(const FInputActionValue& v) {	
+	FVector forward = GetWorld()->
+		GetFirstPlayerController()->
+		PlayerCameraManager->
+		GetCameraRotation().Vector();
+	AddMovementInput(forward, v.GetMagnitude());
+}
+#+end_src
 
 
-# #+REVEAL: split
+#+REVEAL: split
 
-# Con esto ya podemos hacer los movimientos en 4 direcciones o, mejor aún, que el personaje rote cuando usamos /izquierda/ o /derecha/
+Con esto ya podemos hacer los movimientos en 4 direcciones o, mejor aún, que el personaje rote cuando usamos /izquierda/ o /derecha/
 
-# #+REVEAL: split
+#+REVEAL: split
 
-# Buscad cómo rotar en la ayuda de UE
+Buscad cómo rotar en la ayuda de UE
 
-# Haremos otro =BindAction()= para la rotación
+Haremos otro =BindAction()= para la rotación
 
-# Y moveremos la rotación del personaje
+Y moveremos la rotación del personaje
 
-# #+REVEAL: split
+#+REVEAL: split
 
-# Los =FRotator= se pueden sumar con el operador =+= (está sobrecargado)
+Los =FRotator= se pueden sumar con el operador =+= (está sobrecargado)
 
 
 
@@ -616,7 +637,7 @@ Cuando un escenario arranca en Unreal, por defecto, el controlador es asignado a
 Por tanto, podemos acceder a ese =Pawn=:
 
 #+begin_src cpp
-TObjectPtr<APawn> * pawn = 
+TObjectPtr<APawn> pawn = 
   GetWorld()->GetFirstPlayerController()->
     GetPawn();
 #+end_src

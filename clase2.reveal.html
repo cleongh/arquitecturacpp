@@ -239,7 +239,7 @@ La clase <code>UFloatingPawnMovement</code> no estará reconocida por el compila
 </p>
 
 
-<div id="org0df84fa" class="figure">
+<div id="org8e1b193" class="figure">
 <p><img src="imgs/includes_extra.png" alt="includes_extra.png" width="600" />
 </p>
 <p><span class="figure-number">Figura 1: </span>La manera más secilla es buscar la clase en Internet, y en la documentación de Unreal veremos la ruta del <code>#include</code></p>
@@ -281,7 +281,7 @@ _camera-&gt;SetupAttachment(arm);
 <section>
 
 
-<div id="orgf3176be" class="figure">
+<div id="org8e8158a" class="figure">
 <p><img src="imgs/asignar_game_mode.png" alt="asignar_game_mode.png" height="450" />
 </p>
 <p><span class="figure-number">Figura 2: </span>También podemos crear una escena nueva, y asignarle el <code>Game Mode</code> correspondiente</p>
@@ -359,15 +359,22 @@ Unreal 5 tiene una versión más controlada de los <a href="https://unrealcommun
 <section>
 
 <p>
-Reemplazan los punteros &laquo;crudos&raquo; a assets, haciendo que se automatice la carga perezosa
+Mientras haya un <code>TObjectPtr</code>, el recolector de basura no limpiará el <code>UObject</code>
 </p>
+
+<p>
+Reemplazan los punteros &laquo;crudos&raquo; a assets
+</p>
+
+</section>
+<section>
 
 <p>
 Además, cuando se construye en una versión que no es de editor, se optimiza
 </p>
 
 <p>
-En general, se recomienda su uso como reemplazo para <code>UPROPERTIES</code> (porque el beneficio está en el editor):
+En general, se recomienda su uso como reemplazo para <code>UPROPERTIES</code>:
 </p>
 
 <div class="org-src-container">
@@ -385,9 +392,9 @@ TObjectPtr&lt;ACPPAdventurer&gt; _adventurer;
 <section>
 
 <ul>
-<li><code>TObjectPtr&lt;T&gt;</code> (o simplemente el punto con el <code>UPROPERTY</code>) toma posesión (quizá compartida) de un asset</li>
-<li><code>TWeakObjectPtr&lt;T&gt;</code> es un puntero débil sin posesión, pero tiene el coste de comprobar que el objeto no ha sido limpiado (<code>TObjectPtr</code> <i>nullifica</i> las referencias, es más eficiente)</li>
-<li><code>TSoftObjectPtr&lt;T&gt;</code> es como un <code>weak</code>, pero tiene funcionalidad para la carga perezosa</li>
+<li><code>TObjectPtr&lt;T&gt;</code> (o simplemente el punto con el <code>UPROPERTY</code>) toma posesión (quizá compartida) de un objeto</li>
+<li><code>TWeakObjectPtr&lt;T&gt;</code> es un puntero débil sin posesión (el recolector se puede lanzar), pero tiene el coste de comprobar que el objeto no ha sido limpiado (<code>TObjectPtr</code> <i>nullifica</i> las referencias, es más eficiente)</li>
+<li><code>TSoftObjectPtr&lt;T&gt;</code> es algo distinto: se guarda la referencia pero solo carga (ruta de asset) cuando necesita</li>
 
 </ul>
 </section>
@@ -448,7 +455,7 @@ En el constructor:
 <section>
 
 <p>
-En <code>BeginPlay</code>:
+Carga síncrona en <code>BeginPlay</code>:
 </p>
 
 <div class="org-src-container">
@@ -464,8 +471,192 @@ En <code>BeginPlay</code>:
 </section>
 <section>
 
+<div class="org-src-container">
+
+<pre><code class="cpp" >FStreamableDelegate Delegate =
+  FStreamableDelegate::CreateUObject
+    (
+     this,
+     &amp;MiActor::MetodoDeAvisar
+    );
+
+UAssetManager::GetStreamableManager().RequestAsyncLoad
+  (
+   _malla_component.ToSoftObjectPath(),
+   Delegate
+  );
+</code></pre>
+</div>
+
+</section>
+<section>
+
 <p>
 Añadimos una instancia a la escena, asignamos su malla, y se verá instanciada al darle a <code>Play</code>
+</p>
+
+
+<p>
+y* Entrada con <code>Enhanced Input</code>
+</p>
+</section>
+<section id="slide-5-2">
+<h3 id="5-2"><span class="section-number-3">5.2.</span> Entrada hasta UE4</h3>
+<p>
+UE4 usa un motor de entrada más sencillo que UE \(\geq 5\)
+</p>
+</section>
+<section id="slide-5-3">
+<h3 id="5-3"><span class="section-number-3">5.3.</span> Enhanced Input</h3>
+<p>
+Para que UE reconozca el subsistema de entrada nuevo, hay que asegurarse de que la cadena <code>"EnhancedInput"</code> está en el archivo <code>[NOMBRE_PROYECTO].Build.cs</code>, que estará en el mismo sitio que los <code>.cpp</code>:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="csharp" >PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
+</code></pre>
+</div>
+
+</section>
+<section>
+
+<p>
+En versiones recientes, esto ya estará añadido al crear el proyecto.
+</p>
+
+</section>
+<section>
+
+
+<div id="orgceac49f" class="figure">
+<p><img src="imgs/configurar_enhanced_input.png" alt="configurar_enhanced_input.png" height="300" />
+</p>
+<p><span class="figure-number">Figura 3: </span>Tenemos que asegurarnos (seguramente estará así por defecto) de que el subsistema mejorado está seleccionado por defecto</p>
+</div>
+
+</section>
+<section>
+
+<p>
+En la declaración de la clase de nuestro personaje (el <code>.h</code>), creamos punteros a las clases de Enhanced Input que antes hacíamos con Blueprints:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >#include "InputMappingContext.h"
+#include "EnhancedInputComponent.h"
+// ...
+
+// El mapping context
+UInputMappingContext* _input_mapping_context;
+
+// Una acción (puede haber más)
+UInputAction* _move;
+</code></pre>
+</div>
+
+</section>
+<section>
+
+<p>
+En el constructor, las instanciamos:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >_move = CreateDefaultSubobject&lt;UInputAction&gt;(TEXT("MoveAction"));
+
+_input_mapping_context = CreateDefaultSubobject&lt;UInputMappingContext&gt;(TEXT("NormalMapping"));	
+</code></pre>
+</div>
+
+</section>
+<section>
+
+<p>
+En en <code>.cpp</code> de nuestro <code>Pawn</code> vamos a configurar la entrada para que enlace los mappings y las acciones:
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >#include "EnhancedInputSubsystems.h"
+#include "Engine/LocalPlayer.h" 
+// ...
+void ACPPAdventurer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+        Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+        auto controller = Cast&lt;APlayerController&gt;(GetController());
+        if (auto system = controller-&gt;GetLocalPlayer()-&gt;GetSubsystem&lt;UEnhancedInputLocalPlayerSubsystem&gt;()) {
+                if (_input_mapping_context) {
+                        // el "1" es la prioridad del mapeo, cuanto más alta, más prioritario
+                        system-&gt;AddMappingContext(_input_mapping_context, 1);
+
+                        _move-&gt;bConsumeInput = true;
+                        _move-&gt;ValueType = EInputActionValueType::Axis1D;
+
+                        // hay más maneras de instanciar la tecla (FKey("W"))
+                        _input_mapping_context-&gt;MapKey(_move, EKeys::W);
+
+                        auto &amp; mapping = _input_mapping_context-&gt;MapKey(_move, EKeys::S);
+                        mapping.Modifiers.Add(NewObject&lt;UInputModifierNegate&gt;(this));
+                }
+        }
+
+        auto eic = Cast&lt;UEnhancedInputComponent&gt;(PlayerInputComponent);
+        eic-&gt;BindAction(_move, ETriggerEvent::Triggered, this, &amp;ACPPAdventurer::Move);
+}
+</code></pre>
+</div>
+
+</section>
+<section>
+
+<p>
+Y el método <code>Move</code> (que está en la clase como un método normal), usa el valor del eje para mover el <code>Actor</code>
+</p>
+
+<div class="org-src-container">
+
+<pre><code class="cpp" >void ACPPAdventurer::Move(const FInputActionValue&amp; v) {	
+        FVector forward = GetWorld()-&gt;
+                GetFirstPlayerController()-&gt;
+                PlayerCameraManager-&gt;
+                GetCameraRotation().Vector();
+        AddMovementInput(forward, v.GetMagnitude());
+}
+</code></pre>
+</div>
+
+
+</section>
+<section>
+
+<p>
+Con esto ya podemos hacer los movimientos en 4 direcciones o, mejor aún, que el personaje rote cuando usamos <i>izquierda</i> o <i>derecha</i>
+</p>
+
+</section>
+<section>
+
+<p>
+Buscad cómo rotar en la ayuda de UE
+</p>
+
+<p>
+Haremos otro <code>BindAction()</code> para la rotación
+</p>
+
+<p>
+Y moveremos la rotación del personaje
+</p>
+
+</section>
+<section>
+
+<p>
+Los <code>FRotator</code> se pueden sumar con el operador <code>+</code> (está sobrecargado)
 </p>
 </section>
 </section>
@@ -498,10 +689,10 @@ Creamos un Actor para la celda (como <i>blueprint</i>)
 </p>
 
 
-<div id="org4b3e9a4" class="figure">
+<div id="orgd02b546" class="figure">
 <p><img src="imgs/celda.png" alt="celda.png" height="500" />
 </p>
-<p><span class="figure-number">Figura 3: </span>Se puede hacer la celda con varios <code>Cube</code> en el blueprint</p>
+<p><span class="figure-number">Figura 4: </span>Se puede hacer la celda con varios <code>Cube</code> en el blueprint</p>
 </div>
 
 </section>
@@ -553,10 +744,10 @@ Como ya dijimos, no olvidemos hacer la entidad <code>Movable</code> para que sus
 </p>
 
 
-<div id="org4d14dfa" class="figure">
+<div id="org92a2111" class="figure">
 <p><img src="imgs/celda_movable.png" alt="celda_movable.png" height="200" />
 </p>
-<p><span class="figure-number">Figura 4: </span>Hacer un objeto <code>Movable</code></p>
+<p><span class="figure-number">Figura 5: </span>Hacer un objeto <code>Movable</code></p>
 </div>
 
 </section>
@@ -730,7 +921,7 @@ Por tanto, podemos acceder a ese <code>Pawn</code>:
 
 <div class="org-src-container">
 
-<pre><code class="cpp" >TObjectPtr&lt;APawn&gt; * pawn = 
+<pre><code class="cpp" >TObjectPtr&lt;APawn&gt; pawn = 
   GetWorld()-&gt;GetFirstPlayerController()-&gt;
     GetPawn();
 </code></pre>
@@ -961,10 +1152,10 @@ Para que las cosas solapen (es decir, <b>no colisionen</b>), es mejor cambiar la
 </p>
 
 
-<div id="orgda3a6d0" class="figure">
+<div id="org3994cee" class="figure">
 <p><img src="imgs/overlap_all.png" alt="overlap_all.png" height="200" />
 </p>
-<p><span class="figure-number">Figura 5: </span>En el <i>blueprint</i> de las gemas, en la esfera que tienen, establecemos &laquo;overlap&raquo;</p>
+<p><span class="figure-number">Figura 6: </span>En el <i>blueprint</i> de las gemas, en la esfera que tienen, establecemos &laquo;overlap&raquo;</p>
 </div>
 
 

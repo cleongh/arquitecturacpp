@@ -134,7 +134,7 @@ En el caso de C++, lo que vamos a hacer es asignarlo desde un /Game Mode/ propio
 
 #+REVEAL: split
 
-Por defecto, UE nos ha creado una clase que se llamará =A[NOMBRE]GameModeBase=, y que no hace nada
+Necesitamos crear desde el editor UE una clase =A[NOMBRE]GameModeBase=
 
 #+REVEAL: split
 

@@ -364,7 +364,7 @@ void ADecorador::BeginPlay()
 Añadimos una instancia a la escena, asignamos su malla, y se verá instanciada al darle a =Play=
 
 
-y* Entrada con ~Enhanced Input~
+* Entrada con ~Enhanced Input~
 
 ** Entrada hasta UE4
 
